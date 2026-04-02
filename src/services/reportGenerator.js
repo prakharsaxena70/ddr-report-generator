@@ -9,6 +9,31 @@ import {
   sampleThermalAnalysis,
 } from "../data/sampleData";
 
+function mergeChecklistResponses(responses = {}) {
+  return {
+    bathroom: {
+      ...sampleInspectionAnalysis.checklistResponses.bathroom,
+      ...(responses.bathroom || {}),
+    },
+    balcony: {
+      ...sampleInspectionAnalysis.checklistResponses.balcony,
+      ...(responses.balcony || {}),
+    },
+    terrace: {
+      ...sampleInspectionAnalysis.checklistResponses.terrace,
+      ...(responses.terrace || {}),
+    },
+    externalWall: {
+      ...sampleInspectionAnalysis.checklistResponses.externalWall,
+      ...(responses.externalWall || {}),
+    },
+  };
+}
+
+function normalizeArray(value, fallback) {
+  return Array.isArray(value) && value.length > 0 ? value : fallback;
+}
+
 function groupSeverity(thermalData) {
   return thermalData.reduce(
     (accumulator, entry) => {
@@ -30,31 +55,33 @@ function createExecutiveSummary({ propertyDetails, thermalData, inspectionData }
 }
 
 function createLeakageSummary(inspectionData) {
+  const checklistResponses = mergeChecklistResponses(inspectionData.checklistResponses);
+
   return [
     {
       area: "Bathroom",
-      finding: inspectionData.checklistResponses.bathroom.notes,
+      finding: checklistResponses.bathroom.notes,
       likelyCause:
         "Open tile joints, hollow tiles and possible concealed wet-area transfer through masonry.",
       urgency: "Immediate",
     },
     {
       area: "Balcony",
-      finding: inspectionData.checklistResponses.balcony.notes,
+      finding: checklistResponses.balcony.notes,
       likelyCause:
         "Failed grout lines and threshold ponding enabling lateral migration below tile bed.",
       urgency: "Necessary",
     },
     {
       area: "Terrace",
-      finding: inspectionData.checklistResponses.terrace.notes,
+      finding: checklistResponses.terrace.notes,
       likelyCause:
         "Delayed waterproofing deterioration and slab interface seepage.",
       urgency: "Necessary",
     },
     {
       area: "External Wall",
-      finding: inspectionData.checklistResponses.externalWall.notes,
+      finding: checklistResponses.externalWall.notes,
       likelyCause:
         "Facade cracks, algae-bearing wetness and plumbing-related wall saturation.",
       urgency: "Immediate",
@@ -190,12 +217,16 @@ function normalizeInspectionResponse(result) {
   return {
     ...sampleInspectionAnalysis,
     ...result,
-    impactedAreas: result.impactedAreas || sampleInspectionAnalysis.impactedAreas,
-    positiveSideInputs:
-      result.positiveSideInputs || sampleInspectionAnalysis.positiveSideInputs,
-    checklistResponses:
-      result.checklistResponses || sampleInspectionAnalysis.checklistResponses,
-    summaryTable: result.summaryTable || sampleInspectionAnalysis.summaryTable,
+    impactedAreas: normalizeArray(
+      result.impactedAreas,
+      sampleInspectionAnalysis.impactedAreas,
+    ),
+    positiveSideInputs: normalizeArray(
+      result.positiveSideInputs,
+      sampleInspectionAnalysis.positiveSideInputs,
+    ),
+    checklistResponses: mergeChecklistResponses(result.checklistResponses),
+    summaryTable: normalizeArray(result.summaryTable, sampleInspectionAnalysis.summaryTable),
   };
 }
 
@@ -280,18 +311,65 @@ export async function generateDiagnosisReport({
       maxTokens: 5000,
     });
 
+    const mergedChecklistResponses = mergeChecklistResponses(result.checklistResponses);
+    const mergedNegativeSideInputs = normalizeArray(
+      result.negativeSideInputs,
+      fallbackReport.negativeSideInputs,
+    );
+    const mergedPositiveSideInputs = normalizeArray(
+      result.positiveSideInputs,
+      fallbackReport.positiveSideInputs,
+    );
+
     return {
       ...fallbackReport,
       ...result,
+      checklistResponses: mergedChecklistResponses,
+      leakageSummary: normalizeArray(result.leakageSummary, fallbackReport.leakageSummary),
+      negativeSideInputs: mergedNegativeSideInputs,
+      positiveSideInputs: mergedPositiveSideInputs,
+      therapies: normalizeArray(result.therapies, fallbackReport.therapies),
+      delayedActionRisks: normalizeArray(
+        result.delayedActionRisks,
+        fallbackReport.delayedActionRisks,
+      ),
+      summaryTable: normalizeArray(result.summaryTable, fallbackReport.summaryTable),
+      limitations: normalizeArray(result.limitations, fallbackReport.limitations),
       thermalReferences: fallbackReport.thermalReferences,
       visualReferences:
-        result.visualReferences ||
-        inspectionData.positiveSideInputs.map((item, index) => ({
-          serial: index + 1,
-          area: item.area,
-          description: item.description,
-          risk: item.risk,
-        })),
+        normalizeArray(
+          result.visualReferences,
+          mergedPositiveSideInputs.map((item, index) => ({
+            serial: index + 1,
+            area: item.area,
+            description: item.description,
+            risk: item.risk,
+          })),
+        ),
+      introduction: {
+        ...fallbackReport.introduction,
+        ...(result.introduction || {}),
+        toolsUsed: normalizeArray(
+          result.introduction?.toolsUsed,
+          fallbackReport.introduction.toolsUsed,
+        ),
+      },
+      generalInformation: {
+        ...fallbackReport.generalInformation,
+        ...(result.generalInformation || {}),
+        clientTable: normalizeArray(
+          result.generalInformation?.clientTable,
+          fallbackReport.generalInformation.clientTable,
+        ),
+        siteTable: normalizeArray(
+          result.generalInformation?.siteTable,
+          fallbackReport.generalInformation.siteTable,
+        ),
+      },
+      executiveSummary: normalizeArray(
+        result.executiveSummary,
+        fallbackReport.executiveSummary,
+      ),
     };
   } catch (error) {
     console.warn("Using bundled report-generation fallback.", error);

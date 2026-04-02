@@ -83,10 +83,10 @@ function DataTable({ rows, headers }) {
 
 function CheckboxGrid({ checklistResponses }) {
   const entries = [
-    { label: "WC / Bathroom", value: checklistResponses.bathroom },
-    { label: "Balcony", value: checklistResponses.balcony },
-    { label: "Terrace", value: checklistResponses.terrace },
-    { label: "External Wall", value: checklistResponses.externalWall },
+    { label: "WC / Bathroom", value: checklistResponses?.bathroom || {} },
+    { label: "Balcony", value: checklistResponses?.balcony || {} },
+    { label: "Terrace", value: checklistResponses?.terrace || {} },
+    { label: "External Wall", value: checklistResponses?.externalWall || {} },
   ];
 
   return (
