@@ -26,6 +26,7 @@ Write in professional technical language. For each impacted area, explain:
 Generate all sections matching UrbanRoof's DDR format exactly.`;
 
 const DEFAULT_MODEL = "gemini-2.5-flash";
+const LARGE_FILE_BYTES = 4 * 1024 * 1024;
 
 export function getGeminiProxyUrl() {
   return import.meta.env.VITE_GEMINI_PROXY_URL || "/api/gemini";
@@ -149,6 +150,12 @@ async function sendProxyGeminiRequest({
   temperature,
   file,
 }) {
+  if (file && file.size > LARGE_FILE_BYTES && !getGeminiApiKey()) {
+    throw new Error(
+      "Large PDF uploads require VITE_GEMINI_API_KEY on Vercel. Add that env var and redeploy the app.",
+    );
+  }
+
   const response = await fetch(getGeminiProxyUrl(), {
     method: "POST",
     headers: {
@@ -175,6 +182,11 @@ async function sendProxyGeminiRequest({
 
   if (!response.ok) {
     const errorText = await response.text();
+    if (response.status === 413) {
+      throw new Error(
+        "PDF upload is too large for the server proxy. Set VITE_GEMINI_API_KEY on Vercel so the browser can call Gemini directly, then redeploy.",
+      );
+    }
     throw new Error(`Gemini proxy request failed: ${response.status} ${errorText}`);
   }
 
@@ -189,6 +201,12 @@ export async function sendGeminiRequest({
 }) {
   const model = import.meta.env.VITE_GEMINI_MODEL || DEFAULT_MODEL;
   const useDirectRequest = Boolean(getGeminiApiKey());
+
+  if (file && !useDirectRequest && import.meta.env.PROD) {
+    throw new Error(
+      "VITE_GEMINI_API_KEY is missing in production. Add it in Vercel and redeploy to enable PDF analysis.",
+    );
+  }
 
   const data = useDirectRequest
     ? await sendDirectGeminiRequest({
