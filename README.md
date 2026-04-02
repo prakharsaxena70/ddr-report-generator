@@ -74,10 +74,11 @@ npm install
 ```bash
 VITE_GEMINI_PROXY_URL=http://localhost:3000/api/gemini
 VITE_GEMINI_MODEL=gemini-2.5-flash
+VITE_GEMINI_API_KEY=your_public_browser_key_here
 GEMINI_API_KEY=your_server_side_key_here
 ```
 
-For Vercel production, the frontend can call `/api/gemini` on the same deployment and you only need to set the server-side `GEMINI_API_KEY` secret in Vercel. `VITE_GEMINI_PROXY_URL` is optional in production.
+For Vercel production, set `VITE_GEMINI_API_KEY` so the browser can call Gemini directly for PDF analysis. This avoids Vercel request-size limits and Gemini resumable-upload CORS restrictions. Keep `GEMINI_API_KEY` as the server-side fallback secret for non-browser paths. `VITE_GEMINI_PROXY_URL` is optional in production.
 
 3. Start the app:
 

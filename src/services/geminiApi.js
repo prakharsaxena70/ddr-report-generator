@@ -26,23 +26,31 @@ Write in professional technical language. For each impacted area, explain:
 Generate all sections matching UrbanRoof's DDR format exactly.`;
 
 const DEFAULT_MODEL = "gemini-2.5-flash";
-const FILE_POLL_INTERVAL_MS = 1500;
-const FILE_POLL_TIMEOUT_MS = 45000;
 
 export function getGeminiProxyUrl() {
   return import.meta.env.VITE_GEMINI_PROXY_URL || "/api/gemini";
 }
 
+export function getGeminiApiKey() {
+  return import.meta.env.VITE_GEMINI_API_KEY || "";
+}
+
 export function hasGeminiProxy() {
-  return Boolean(import.meta.env.VITE_GEMINI_PROXY_URL) || import.meta.env.PROD;
+  return Boolean(getGeminiApiKey() || import.meta.env.VITE_GEMINI_PROXY_URL || import.meta.env.PROD);
 }
 
-function getGeminiUploadUrl() {
-  return "/api/gemini-upload";
-}
+export async function fileToBase64(file) {
+  const arrayBuffer = await file.arrayBuffer();
+  let binary = "";
+  const bytes = new Uint8Array(arrayBuffer);
+  const chunkSize = 0x8000;
 
-function getGeminiFileUrl(name) {
-  return `/api/gemini-file?name=${encodeURIComponent(name)}`;
+  for (let index = 0; index < bytes.length; index += chunkSize) {
+    const chunk = bytes.subarray(index, index + chunkSize);
+    binary += String.fromCharCode(...chunk);
+  }
+
+  return btoa(binary);
 }
 
 function parseGeminiJsonResponse(response) {
@@ -62,112 +70,115 @@ function parseGeminiJsonResponse(response) {
   return parsed;
 }
 
-function getFileState(fileData) {
-  const state = fileData?.state;
-  if (typeof state === "string") {
-    return state;
-  }
-  if (typeof state?.name === "string") {
-    return state.name;
-  }
-  return "";
+function buildGeminiBody({ model, prompt, context, temperature, fileData }) {
+  return {
+    contents: [
+      {
+        parts: [
+          ...(fileData
+            ? [
+                {
+                  inline_data: {
+                    mime_type: fileData.mimeType || "application/pdf",
+                    data: fileData.data,
+                  },
+                },
+              ]
+            : []),
+          {
+            text: `${prompt}
+
+Return JSON only.
+
+Context:
+${JSON.stringify(context, null, 2)}`,
+          },
+        ],
+      },
+    ],
+    generationConfig: {
+      temperature,
+      responseMimeType: "application/json",
+    },
+    model,
+  };
 }
 
-function sleep(timeoutMs) {
-  return new Promise((resolve) => window.setTimeout(resolve, timeoutMs));
-}
-
-async function pollGeminiFileUntilReady(name) {
-  const startedAt = Date.now();
-
-  while (Date.now() - startedAt < FILE_POLL_TIMEOUT_MS) {
-    const response = await fetch(getGeminiFileUrl(name));
-    if (!response.ok) {
-      const errorText = await response.text();
-      throw new Error(`Gemini file polling failed: ${response.status} ${errorText}`);
-    }
-
-    const data = await response.json();
-    const file = data.file || data;
-    const state = getFileState(file);
-
-    if (!state || state === "ACTIVE") {
-      return file;
-    }
-
-    if (state === "FAILED") {
-      throw new Error("Gemini file processing failed.");
-    }
-
-    await sleep(FILE_POLL_INTERVAL_MS);
+async function sendDirectGeminiRequest({
+  model,
+  prompt,
+  context,
+  temperature,
+  file,
+}) {
+  const apiKey = getGeminiApiKey();
+  if (!apiKey) {
+    throw new Error("Missing VITE_GEMINI_API_KEY for direct Gemini requests.");
   }
 
-  throw new Error("Gemini file processing timed out.");
+  const fileData = file
+    ? {
+        mimeType: file.type || "application/pdf",
+        data: await fileToBase64(file),
+      }
+    : null;
+
+  const response = await fetch(
+    `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`,
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(buildGeminiBody({ model, prompt, context, temperature, fileData })),
+    },
+  );
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(`Gemini direct request failed: ${response.status} ${errorText}`);
+  }
+
+  return response.json();
 }
 
-async function uploadFileToGemini(file) {
-  const sessionResponse = await fetch(getGeminiUploadUrl(), {
+async function sendProxyGeminiRequest({
+  model,
+  prompt,
+  context,
+  temperature,
+  file,
+}) {
+  const response = await fetch(getGeminiProxyUrl(), {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
     },
     body: JSON.stringify({
-      displayName: file.name,
-      mimeType: file.type || "application/pdf",
-      sizeBytes: file.size,
+      model,
+      prompt,
+      context,
+      generationConfig: {
+        temperature,
+        responseMimeType: "application/json",
+      },
+      ...(file
+        ? {
+            fileData: {
+              mimeType: file.type || "application/pdf",
+              data: await fileToBase64(file),
+            },
+          }
+        : {}),
     }),
   });
 
-  if (!sessionResponse.ok) {
-    const errorText = await sessionResponse.text();
-    throw new Error(`Gemini upload session failed: ${sessionResponse.status} ${errorText}`);
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(`Gemini proxy request failed: ${response.status} ${errorText}`);
   }
 
-  const { uploadUrl } = await sessionResponse.json();
-  const uploadResponse = await fetch(uploadUrl, {
-    method: "POST",
-    headers: {
-      "X-Goog-Upload-Offset": "0",
-      "X-Goog-Upload-Command": "upload, finalize",
-    },
-    body: file,
-  });
-
-  if (!uploadResponse.ok) {
-    const errorText = await uploadResponse.text();
-    throw new Error(`Gemini file upload failed: ${uploadResponse.status} ${errorText}`);
-  }
-
-  const uploadData = await uploadResponse.json();
-  const uploadedFile = uploadData.file || uploadData;
-  const readyFile =
-    getFileState(uploadedFile) && getFileState(uploadedFile) !== "ACTIVE"
-      ? await pollGeminiFileUntilReady(uploadedFile.name)
-      : uploadedFile;
-
-  return {
-    name: readyFile.name,
-    uri: readyFile.uri,
-    mimeType: readyFile.mimeType || file.type || "application/pdf",
-  };
-}
-
-async function cleanupGeminiFile(name) {
-  if (!name) {
-    return;
-  }
-
-  try {
-    await fetch("/api/gemini-file", {
-      method: "DELETE",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ name }),
-    });
-  } catch (_error) {
-    // Cleanup failure should not block the user flow.
-  }
+  return response.json();
 }
 
 export async function sendGeminiRequest({
@@ -176,41 +187,24 @@ export async function sendGeminiRequest({
   context = {},
   temperature = 0.2,
 }) {
-  const uploadedFile = file ? await uploadFileToGemini(file) : null;
+  const model = import.meta.env.VITE_GEMINI_MODEL || DEFAULT_MODEL;
+  const useDirectRequest = Boolean(getGeminiApiKey());
 
-  try {
-    const response = await fetch(getGeminiProxyUrl(), {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        model: import.meta.env.VITE_GEMINI_MODEL || DEFAULT_MODEL,
+  const data = useDirectRequest
+    ? await sendDirectGeminiRequest({
+        model,
         prompt,
         context,
-        generationConfig: {
-          temperature,
-          responseMimeType: "application/json",
-        },
-        ...(uploadedFile
-          ? {
-              fileUri: uploadedFile.uri,
-              fileMimeType: uploadedFile.mimeType,
-            }
-          : {}),
-      }),
-    });
+        temperature,
+        file,
+      })
+    : await sendProxyGeminiRequest({
+        model,
+        prompt,
+        context,
+        temperature,
+        file,
+      });
 
-    if (!response.ok) {
-      const errorText = await response.text();
-      throw new Error(`Gemini request failed: ${response.status} ${errorText}`);
-    }
-
-    const data = await response.json();
-    return parseGeminiJsonResponse(data);
-  } finally {
-    if (uploadedFile?.name) {
-      cleanupGeminiFile(uploadedFile.name);
-    }
-  }
+  return parseGeminiJsonResponse(data);
 }

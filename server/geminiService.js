@@ -106,6 +106,7 @@ export async function generateGeminiContent({
   context = {},
   fileUri,
   fileMimeType,
+  fileData,
   generationConfig = {},
 }) {
   const apiKey = getApiKey();
@@ -117,6 +118,13 @@ export async function generateGeminiContent({
       file_data: {
         mime_type: fileMimeType || "application/pdf",
         file_uri: fileUri,
+      },
+    });
+  } else if (fileData?.data) {
+    parts.push({
+      inline_data: {
+        mime_type: fileData.mimeType || "application/pdf",
+        data: fileData.data,
       },
     });
   }
