@@ -18,7 +18,7 @@ function normalizeThermalEntry(entry) {
 
 export async function analyzeThermalDocument({ file, propertyDetails }) {
   if (!file) {
-    return sampleThermalAnalysis;
+    throw new Error("Upload the Thermal Images PDF before generating the report.");
   }
 
   try {
@@ -39,7 +39,9 @@ export async function analyzeThermalDocument({ file, propertyDetails }) {
 
     return result.map(normalizeThermalEntry);
   } catch (error) {
-    console.warn("Using bundled sample thermal analysis fallback.", error);
-    return sampleThermalAnalysis;
+    console.error("Thermal analysis failed.", error);
+    throw new Error(
+      "Unable to analyze the thermal PDF. Please verify the file and Gemini configuration.",
+    );
   }
 }

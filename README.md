@@ -13,7 +13,7 @@ A production-ready React application for UrbanRoof that turns thermal-inspection
 - Cross-correlates thermal anomalies with inspection findings
 - Renders a structured DDR preview in UrbanRoof styling
 - Exports the preview to PDF using `jsPDF`
-- Includes a bundled sample case based on the supplied UrbanRoof brief so the app still runs without live PDFs or API credentials
+- Includes bundled sample-output assets as reference files, while live report generation requires both uploaded PDFs
 
 ## Tech stack
 
@@ -110,7 +110,7 @@ The exact assignment prompts are implemented in [src/services/geminiApi.js](/C:/
 
 ## Sample case behavior
 
-If no PDF is uploaded, or if the Gemini proxy is not configured, the app automatically uses bundled sample data based on the assignment:
+The repository includes bundled sample data and reference outputs based on the assignment:
 
 - 30 thermal image IDs from `RB02377X` to `RB02406X`
 - date `27/09/2022`
@@ -121,7 +121,7 @@ If no PDF is uploaded, or if the Gemini proxy is not configured, the app automat
 - bathroom tile joint hollowness in Flat 203 as the primary source
 - external wall cracking, algae/fungus, and plumbing issues as secondary contributors
 
-This lets you demo the entire workflow immediately.
+The live app now requires both uploaded PDFs before the AI diagnosis report can be generated.
 
 ## PDF output
 

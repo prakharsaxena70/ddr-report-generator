@@ -11,10 +11,181 @@ import {
   sampleThermalAnalysis,
 } from "./data/sampleData";
 import { hasGeminiProxy } from "./services/geminiApi";
-import { generateDiagnosisReport, analyzeInspectionDocument } from "./services/reportGenerator";
+import { analyzeInspectionDocument, generateDiagnosisReport } from "./services/reportGenerator";
 import { analyzeThermalDocument } from "./services/thermalAnalyzer";
 import { exportReportPdf } from "./utils/pdfExport";
 import { deriveDashboardMetrics } from "./utils/reportHelpers";
+
+function WorkflowRail({ propertyDetails, thermalFile, inspectionFile, report }) {
+  const steps = [
+    {
+      number: "01",
+      title: "Property Details",
+      state: propertyDetails.propertyAddress && propertyDetails.inspectorName ? "Done" : "In progress",
+    },
+    {
+      number: "02",
+      title: "Thermal Upload",
+      state: thermalFile ? "Uploaded" : "Required",
+    },
+    {
+      number: "03",
+      title: "Checklist Upload",
+      state: inspectionFile ? "Uploaded" : "Required",
+    },
+    {
+      number: "04",
+      title: "Generate DDR",
+      state: report ? "Completed" : "Waiting",
+    },
+  ];
+
+  return (
+    <div className="rounded-[30px] border border-white/60 bg-charcoal p-5 text-white shadow-card">
+      <p className="text-xs font-semibold uppercase tracking-[0.28em] text-stone-300">
+        Workflow
+      </p>
+      <div className="mt-4 space-y-3">
+        {steps.map((step) => (
+          <div
+            key={step.number}
+            className="workflow-step rounded-[22px] border border-white/10 bg-white/5 px-4 py-4"
+          >
+            <div className="flex items-center justify-between gap-3">
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-[0.2em] text-stone-400">
+                  Step {step.number}
+                </p>
+                <p className="mt-2 text-base font-semibold text-white">{step.title}</p>
+              </div>
+              <span className="rounded-full border border-white/15 bg-white/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-stone-200">
+                {step.state}
+              </span>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function StatusCard({ hasLiveGemini }) {
+  return (
+    <div className="rounded-[30px] border border-stone-200 bg-white p-5 shadow-card">
+      <p className="text-xs font-semibold uppercase tracking-[0.28em] text-amberdeep">
+        AI Status
+      </p>
+      <h3 className="mt-2 font-display text-2xl text-charcoal">Analysis Mode</h3>
+      <div className="mt-4 rounded-[24px] border border-stone-200 bg-stone-50 p-4">
+        <div className="flex items-center justify-between gap-3">
+          <p className="text-sm font-semibold text-charcoal">Gemini 2.5 Flash</p>
+          <span className="rounded-full border border-stone-200 bg-white px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-stone-600">
+            {hasLiveGemini ? "Live route" : "Configuration needed"}
+          </span>
+        </div>
+        <p className="mt-3 text-sm leading-6 text-stone-600">
+          {hasLiveGemini
+            ? "Uploaded PDFs will be processed through the server-side Gemini proxy before the DDR is generated."
+            : "Configure the Gemini API route before using live AI analysis. Both uploaded PDFs are required for report generation."}
+        </p>
+      </div>
+    </div>
+  );
+}
+
+function GenerationPanel({
+  isGenerating,
+  currentProgress,
+  onGenerate,
+  progressIndex,
+  canGenerate,
+}) {
+  return (
+    <div className="rounded-[30px] border border-stone-200 bg-white p-6 shadow-card">
+      <div className="flex flex-col gap-5">
+        <div>
+          <p className="text-xs font-semibold uppercase tracking-[0.28em] text-amberdeep">
+            Step 4
+          </p>
+          <h2 className="mt-2 font-display text-2xl text-charcoal">
+            Generate AI Diagnosis Report
+          </h2>
+          <p className="mt-2 max-w-xl text-sm leading-6 text-stone-600">
+            The system analyzes thermal imagery, extracts checklist findings, correlates
+            likely leakage causes, and assembles the final DDR structure automatically.
+          </p>
+        </div>
+
+        <div className="grid gap-3 md:grid-cols-2">
+          {progressMessages.map((message, index) => {
+            const state = isGenerating
+              ? index < progressIndex
+                ? "done"
+                : index === progressIndex
+                  ? "active"
+                  : "waiting"
+              : "waiting";
+
+            return (
+              <div
+                key={message}
+                className={`rounded-[22px] border px-4 py-4 transition ${
+                  state === "active"
+                    ? "border-ember bg-amber-50"
+                    : state === "done"
+                      ? "border-moss bg-lime-50"
+                      : "border-stone-200 bg-stone-50"
+                }`}
+              >
+                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-stone-500">
+                  {state === "done" ? "Done" : state === "active" ? "Running" : "Queued"}
+                </p>
+                <p className="mt-2 text-sm font-semibold text-charcoal">{message}</p>
+              </div>
+            );
+          })}
+        </div>
+
+        <div className="flex flex-col gap-4 rounded-[26px] border border-stone-200 bg-gradient-to-r from-charcoal to-stone-900 p-5 text-white lg:flex-row lg:items-center lg:justify-between">
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-[0.22em] text-stone-300">
+              Generate Output
+            </p>
+            <p className="mt-2 text-sm leading-6 text-stone-300">
+              {isGenerating
+                ? currentProgress || "Preparing diagnosis..."
+                : "Run the end-to-end workflow when your input details and PDFs are ready."}
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={onGenerate}
+            disabled={isGenerating || !canGenerate}
+            className="inline-flex min-w-[260px] items-center justify-center rounded-full bg-gradient-to-r from-amberdeep to-ember px-6 py-3 text-sm font-semibold text-white transition hover:-translate-y-0.5 hover:opacity-95 disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            {isGenerating ? currentProgress || "Generating..." : "Generate AI Diagnosis Report"}
+          </button>
+        </div>
+
+        {!canGenerate && !isGenerating ? (
+          <div className="rounded-[22px] border border-stone-200 bg-stone-50 px-4 py-4 text-sm leading-6 text-stone-600">
+            Upload both PDFs first. The generator is locked until the Thermal Images PDF and
+            Inspection Checklist PDF are attached.
+          </div>
+        ) : null}
+      </div>
+    </div>
+  );
+}
+
+function HeroMetric({ label, value }) {
+  return (
+    <div className="rounded-[24px] border border-white/12 bg-white/5 p-4">
+      <p className="text-xs font-semibold uppercase tracking-[0.2em] text-stone-400">{label}</p>
+      <p className="mt-3 text-2xl font-bold text-white">{value}</p>
+    </div>
+  );
+}
 
 export default function App() {
   const [propertyDetails, setPropertyDetails] = useState(samplePropertyDetails);
@@ -27,7 +198,11 @@ export default function App() {
   const [isGenerating, setIsGenerating] = useState(false);
   const [error, setError] = useState("");
   const [isDownloading, setIsDownloading] = useState(false);
+
   const dashboardMetrics = deriveDashboardMetrics({ thermalData, inspectionData });
+  const hasLiveGemini = hasGeminiProxy();
+  const progressIndex = progressMessages.indexOf(currentProgress);
+  const canGenerate = Boolean(thermalFile && inspectionFile);
 
   function handlePropertyChange(event) {
     const { name, value } = event.target;
@@ -39,11 +214,16 @@ export default function App() {
 
   async function runProgressStep(message, task) {
     setCurrentProgress(message);
-    await new Promise((resolve) => window.setTimeout(resolve, 300));
+    await new Promise((resolve) => window.setTimeout(resolve, 280));
     return task();
   }
 
   async function handleGenerateReport() {
+    if (!canGenerate) {
+      setError("Upload both required PDFs before generating the AI diagnosis report.");
+      return;
+    }
+
     setIsGenerating(true);
     setError("");
 
@@ -104,105 +284,104 @@ export default function App() {
 
   return (
     <main className="min-h-screen bg-transparent px-4 py-6 text-charcoal md:px-8">
-      <div className="mx-auto max-w-[1480px]">
-        <section className="overflow-hidden rounded-[36px] border border-white/60 bg-charcoal px-6 py-8 text-white shadow-card md:px-10 md:py-10">
-          <div className="flex flex-col gap-8">
-            <div className="max-w-3xl">
-              <div className="inline-flex rounded-full border border-white/15 bg-white/5 px-4 py-2 text-xs font-semibold uppercase tracking-[0.28em] text-stone-300">
-                UrbanRoof | Mumbai & Pune
+      <div className="mx-auto max-w-[1500px]">
+        <section className="overflow-hidden rounded-[38px] border border-white/60 bg-charcoal px-6 py-8 text-white shadow-card md:px-10 md:py-10">
+          <div className="grid gap-8 xl:grid-cols-[minmax(0,1.1fr)_360px] xl:items-end">
+            <div className="relative">
+              <div className="absolute -left-10 top-0 h-40 w-40 rounded-full bg-amberdeep/15 blur-3xl" />
+              <div className="absolute bottom-0 right-20 h-48 w-48 rounded-full bg-moss/10 blur-3xl" />
+              <div className="relative max-w-3xl">
+                <div className="inline-flex rounded-full border border-white/15 bg-white/5 px-4 py-2 text-xs font-semibold uppercase tracking-[0.28em] text-stone-300">
+                  UrbanRoof | Mumbai & Pune
+                </div>
+                <h1 className="mt-6 font-display text-4xl leading-tight md:text-6xl">
+                  Property diagnostics that feel like a guided workflow, not a form dump.
+                </h1>
+                <p className="mt-5 max-w-2xl text-base leading-8 text-stone-300">
+                  Upload documents, let Gemini interpret the evidence, review the structured
+                  findings, and export a polished UrbanRoof diagnosis report with much less
+                  manual effort.
+                </p>
               </div>
-              <h1 className="mt-6 font-display text-4xl leading-tight md:text-6xl">
-                Detailed diagnosis reports that turn thermal PDFs into action plans.
-              </h1>
-              <p className="mt-5 max-w-2xl text-base leading-8 text-stone-300">
-                Upload inspection documents, run Gemini-powered thermal interpretation,
-                cross-reference building observations, preview the final DDR, and export
-                an UrbanRoof-branded PDF in one flow.
-              </p>
+            </div>
+
+            <div className="grid gap-4 md:grid-cols-3 xl:grid-cols-1">
+              <HeroMetric label="Delivery" value="Full DDR + PDF" />
+              <HeroMetric label="Inputs" value="2 PDFs + site details" />
+              <HeroMetric label="Model" value="Gemini 2.5 Flash" />
             </div>
           </div>
         </section>
 
-        <section className="mt-6 grid gap-6 xl:grid-cols-[520px_minmax(0,1fr)]">
-          <div className="space-y-6">
+        <section className="app-grid mt-6 grid gap-6 xl:grid-cols-[520px_minmax(0,1fr)]">
+          <div className="sticky-rail space-y-6">
+            <WorkflowRail
+              propertyDetails={propertyDetails}
+              thermalFile={thermalFile}
+              inspectionFile={inspectionFile}
+              report={report}
+            />
+
+            <StatusCard hasLiveGemini={hasLiveGemini} />
+
             <PropertyForm values={propertyDetails} onChange={handlePropertyChange} />
 
             <FileUpload
               title="Thermal Images PDF"
               step="2"
-              description="Upload Thermal_Images.pdf or use the bundled 30-image UrbanRoof case with Bosch GTC 400C sample readings."
+              description="Upload the thermal inspection PDF that contains the thermography captures and temperature references."
               file={thermalFile}
               onFileSelect={setThermalFile}
+              accent="amber"
+              required
             />
 
             <FileUpload
               title="Inspection Checklist PDF"
               step="3"
-              description="Upload Sample_Report.pdf or use the bundled checklist findings for impacted and exposed areas."
+              description="Upload the inspection checklist or summary PDF that contains the impacted areas, exposed zones, and checklist responses."
               file={inspectionFile}
               onFileSelect={setInspectionFile}
+              accent="moss"
+              required
             />
 
-            <div className="rounded-[28px] border border-white/60 bg-white/85 p-6 shadow-card backdrop-blur">
-              <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-                <div>
-                  <p className="text-xs font-semibold uppercase tracking-[0.28em] text-amberdeep">
-                    Step 4
-                  </p>
-                  <h2 className="mt-2 font-display text-2xl text-charcoal">
-                    Generate AI Diagnosis Report
-                  </h2>
-                  <p className="mt-2 max-w-xl text-sm leading-6 text-stone-600">
-                    The app runs thermal analysis, extracts inspection findings, generates
-                    the DDR narrative, and prepares a styled preview ready for PDF export.
-                  </p>
-                </div>
-                <button
-                  type="button"
-                  onClick={handleGenerateReport}
-                  disabled={isGenerating}
-                  className="inline-flex min-w-[240px] items-center justify-center rounded-full bg-gradient-to-r from-amberdeep to-ember px-6 py-3 text-sm font-semibold text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
-                >
-                  {isGenerating ? currentProgress || "Generating..." : "Generate AI Diagnosis Report"}
-                </button>
+            <GenerationPanel
+              isGenerating={isGenerating}
+              currentProgress={currentProgress}
+              onGenerate={handleGenerateReport}
+              progressIndex={progressIndex}
+              canGenerate={canGenerate}
+            />
+
+            {error ? (
+              <div className="rounded-[28px] border border-red-200 bg-red-50 px-5 py-4 text-sm leading-6 text-red-700 shadow-card">
+                {error}
               </div>
-
-              <div className="mt-5 rounded-[24px] border border-stone-200 bg-stone-50 px-5 py-4 text-sm leading-6 text-stone-700">
-                <p>
-                  {hasGeminiProxy()
-                    ? "Gemini analysis route configured. Uploaded PDFs will be analyzed through the server-side Gemini proxy."
-                    : "No Gemini proxy detected. The app will still run end-to-end using the bundled UrbanRoof sample case and prompt structure."}
-                </p>
-              </div>
-
-              {error ? (
-                <div className="mt-4 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
-                  {error}
-                </div>
-              ) : null}
-            </div>
-
-            {report ? <Dashboard metrics={dashboardMetrics} /> : null}
+            ) : null}
           </div>
 
           <div className="space-y-6">
-            <div className="rounded-[28px] border border-white/60 bg-white/85 p-6 shadow-card backdrop-blur">
-              <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
+            <div className="rounded-[30px] border border-white/60 bg-white/90 p-6 shadow-card backdrop-blur">
+              <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
                 <div>
                   <p className="text-xs font-semibold uppercase tracking-[0.28em] text-amberdeep">
-                    Step 5
+                    Report Workspace
                   </p>
-                  <h2 className="mt-2 font-display text-2xl text-charcoal">Preview Generated Report</h2>
-                  <p className="mt-2 text-sm leading-6 text-stone-600">
-                    The preview mirrors the DDR layout so the same structure is exported into PDF.
+                  <h2 className="mt-2 font-display text-3xl text-charcoal">
+                    Preview the generated diagnosis
+                  </h2>
+                  <p className="mt-2 max-w-2xl text-sm leading-6 text-stone-600">
+                    This area becomes the client-facing output. Review the generated DDR,
+                    validate the findings, then export the PDF.
                   </p>
                 </div>
 
                 {report ? (
-                  <div className="flex items-center gap-3">
-                    <p className="text-sm text-stone-500">
-                      Step 6: export the finished DDR
-                    </p>
+                  <div className="flex flex-wrap items-center gap-3">
+                    <span className="rounded-full border border-stone-200 bg-stone-50 px-4 py-2 text-xs font-semibold uppercase tracking-[0.18em] text-stone-600">
+                      Step 6
+                    </span>
                     <PDFGenerator
                       onDownload={handleDownloadPdf}
                       disabled={isDownloading}
@@ -214,22 +393,51 @@ export default function App() {
             </div>
 
             {report ? (
-              <div>
-                <ReportPreview report={report} propertyDetails={propertyDetails} />
-              </div>
+              <>
+                <Dashboard metrics={dashboardMetrics} />
+                <div>
+                  <ReportPreview report={report} propertyDetails={propertyDetails} />
+                </div>
+              </>
             ) : (
-              <div className="rounded-[36px] border border-dashed border-stone-300 bg-white/70 p-10 text-center shadow-card">
-                <p className="text-sm font-semibold uppercase tracking-[0.24em] text-amberdeep">
-                  Waiting for report
-                </p>
-                <h3 className="mt-3 font-display text-3xl text-charcoal">
-                  Generate the diagnosis to see the UrbanRoof DDR preview
-                </h3>
-                <p className="mx-auto mt-4 max-w-2xl text-sm leading-7 text-stone-600">
-                  The generated report will include the executive summary, leakage source
-                  analysis, negative and positive side tables, therapies, thermal references,
-                  limitations, and legal disclaimer in an exportable format.
-                </p>
+              <div className="rounded-[36px] border border-white/60 bg-white/90 p-8 shadow-card">
+                <div className="grid gap-6 xl:grid-cols-[1fr_300px] xl:items-start">
+                  <div>
+                    <p className="text-xs font-semibold uppercase tracking-[0.24em] text-amberdeep">
+                      Waiting for report
+                    </p>
+                    <h3 className="mt-3 font-display text-4xl text-charcoal">
+                      Your DDR preview will appear here after generation.
+                    </h3>
+                    <p className="mt-4 max-w-2xl text-sm leading-7 text-stone-600">
+                      The generated report will include the executive summary, leakage-source
+                      analysis, negative and positive side tables, suggested therapies, thermal
+                      references, limitations, and the legal disclaimer in an export-ready
+                      format.
+                    </p>
+                  </div>
+
+                  <div className="rounded-[28px] border border-stone-200 bg-canvas p-5">
+                    <p className="text-sm font-semibold uppercase tracking-[0.2em] text-charcoal">
+                      What you will get
+                    </p>
+                    <div className="mt-4 space-y-3">
+                      {[
+                        "Executive summary and leakage source overview",
+                        "Negative-side and positive-side observation tables",
+                        "Thermal reference tables with diagnosis notes",
+                        "Suggested therapies and delayed-action risks",
+                      ].map((item) => (
+                        <div
+                          key={item}
+                          className="rounded-2xl border border-stone-200 bg-white px-4 py-3 text-sm leading-6 text-stone-700"
+                        >
+                          {item}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
               </div>
             )}
           </div>

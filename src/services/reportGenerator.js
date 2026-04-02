@@ -201,7 +201,7 @@ function normalizeInspectionResponse(result) {
 
 export async function analyzeInspectionDocument({ file, propertyDetails }) {
   if (!file) {
-    return sampleInspectionAnalysis;
+    throw new Error("Upload the Inspection Checklist PDF before generating the report.");
   }
 
   try {
@@ -216,8 +216,10 @@ export async function analyzeInspectionDocument({ file, propertyDetails }) {
 
     return normalizeInspectionResponse(result);
   } catch (error) {
-    console.warn("Using bundled sample inspection analysis fallback.", error);
-    return sampleInspectionAnalysis;
+    console.error("Inspection analysis failed.", error);
+    throw new Error(
+      "Unable to analyze the inspection PDF. Please verify the file and Gemini configuration.",
+    );
   }
 }
 
