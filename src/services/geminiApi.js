@@ -2,7 +2,7 @@ import { extractJsonFromText } from "../utils/json";
 
 export const THERMAL_ANALYSIS_PROMPT = `You are an expert building thermographer. Analyze these thermal images and extract structured data.
 For each thermal image, identify: image filename, date, hotspot temperature, coldspot temperature,
-emissivity, and most importantly — interpret what the thermal pattern means for building health.
+emissivity, and most importantly - interpret what the thermal pattern means for building health.
 Look for: blue/cyan areas indicating moisture/dampness (cooler due to evaporation),
 red/orange hotspots indicating thermal bridges or active leakage points,
 uneven gradients indicating water ingress paths.
@@ -25,10 +25,14 @@ Write in professional technical language. For each impacted area, explain:
 - Recommended therapy (grouting treatment, plaster work, RCC treatment, waterproofing)
 Generate all sections matching UrbanRoof's DDR format exactly.`;
 
-const DEFAULT_MODEL = "claude-sonnet-4-20250514";
+const DEFAULT_MODEL = "gemini-2.5-flash";
 
-export function hasAnthropicProxy() {
-  return Boolean(import.meta.env.VITE_ANTHROPIC_PROXY_URL);
+export function getGeminiProxyUrl() {
+  return import.meta.env.VITE_GEMINI_PROXY_URL || "/api/gemini";
+}
+
+export function hasGeminiProxy() {
+  return Boolean(import.meta.env.VITE_GEMINI_PROXY_URL) || import.meta.env.PROD;
 }
 
 export async function fileToBase64(file) {
@@ -45,84 +49,58 @@ export async function fileToBase64(file) {
   return btoa(binary);
 }
 
-function parseClaudeJsonResponse(response) {
-  const textBlocks = Array.isArray(response?.content)
-    ? response.content
-        .filter((block) => block.type === "text")
-        .map((block) => block.text)
+function parseGeminiJsonResponse(response) {
+  const textBlocks = Array.isArray(response?.candidates)
+    ? response.candidates
+        .flatMap((candidate) => candidate?.content?.parts || [])
+        .filter((part) => typeof part.text === "string")
+        .map((part) => part.text)
         .join("\n")
     : "";
 
   const parsed = extractJsonFromText(textBlocks);
   if (!parsed) {
-    throw new Error("Claude response did not contain valid JSON.");
+    throw new Error("Gemini response did not contain valid JSON.");
   }
 
   return parsed;
 }
 
-export async function sendClaudeRequest({
+export async function sendGeminiRequest({
   prompt,
   file,
   context = {},
-  maxTokens = 4096,
+  temperature = 0.2,
 }) {
-  const proxyUrl = import.meta.env.VITE_ANTHROPIC_PROXY_URL;
-  if (!proxyUrl) {
-    throw new Error(
-      "Anthropic proxy URL not configured. Set VITE_ANTHROPIC_PROXY_URL to enable live analysis.",
-    );
-  }
-
-  const base64File = file ? await fileToBase64(file) : null;
-  const body = {
-    model: import.meta.env.VITE_ANTHROPIC_MODEL || DEFAULT_MODEL,
-    max_tokens: maxTokens,
-    temperature: 0.2,
-    messages: [
-      {
-        role: "user",
-        content: [
-          ...(base64File
-            ? [
-                {
-                  type: "document",
-                  source: {
-                    type: "base64",
-                    media_type: "application/pdf",
-                    data: base64File,
-                  },
-                },
-              ]
-            : []),
-          {
-            type: "text",
-            text: `${prompt}
-
-Return JSON only.
-
-Context:
-${JSON.stringify(context, null, 2)}`,
-          },
-        ],
-      },
-    ],
-  };
-
-  const response = await fetch(proxyUrl, {
+  const response = await fetch(getGeminiProxyUrl(), {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
-      "anthropic-version": "2023-06-01",
     },
-    body: JSON.stringify(body),
+    body: JSON.stringify({
+      model: import.meta.env.VITE_GEMINI_MODEL || DEFAULT_MODEL,
+      prompt,
+      context,
+      generationConfig: {
+        temperature,
+        responseMimeType: "application/json",
+      },
+      ...(file
+        ? {
+            file: {
+              mimeType: "application/pdf",
+              data: await fileToBase64(file),
+            },
+          }
+        : {}),
+    }),
   });
 
   if (!response.ok) {
     const errorText = await response.text();
-    throw new Error(`Anthropic request failed: ${response.status} ${errorText}`);
+    throw new Error(`Gemini request failed: ${response.status} ${errorText}`);
   }
 
   const data = await response.json();
-  return parseClaudeJsonResponse(data);
+  return parseGeminiJsonResponse(data);
 }

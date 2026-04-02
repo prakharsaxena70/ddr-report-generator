@@ -1,4 +1,4 @@
-import { startTransition, useRef, useState } from "react";
+import { startTransition, useState } from "react";
 import Dashboard from "./components/Dashboard";
 import FileUpload from "./components/FileUpload";
 import PDFGenerator from "./components/PDFGenerator";
@@ -10,7 +10,7 @@ import {
   samplePropertyDetails,
   sampleThermalAnalysis,
 } from "./data/sampleData";
-import { hasAnthropicProxy } from "./services/claudeApi";
+import { hasGeminiProxy } from "./services/geminiApi";
 import { generateDiagnosisReport, analyzeInspectionDocument } from "./services/reportGenerator";
 import { analyzeThermalDocument } from "./services/thermalAnalyzer";
 import { exportReportPdf } from "./utils/pdfExport";
@@ -27,8 +27,6 @@ export default function App() {
   const [isGenerating, setIsGenerating] = useState(false);
   const [error, setError] = useState("");
   const [isDownloading, setIsDownloading] = useState(false);
-  const previewRef = useRef(null);
-
   const dashboardMetrics = deriveDashboardMetrics({ thermalData, inspectionData });
 
   function handlePropertyChange(event) {
@@ -117,7 +115,7 @@ export default function App() {
                 Detailed diagnosis reports that turn thermal PDFs into action plans.
               </h1>
               <p className="mt-5 max-w-2xl text-base leading-8 text-stone-300">
-                Upload inspection documents, run Claude-powered thermal interpretation,
+                Upload inspection documents, run Gemini-powered thermal interpretation,
                 cross-reference building observations, preview the final DDR, and export
                 an UrbanRoof-branded PDF in one flow.
               </p>
@@ -171,9 +169,9 @@ export default function App() {
 
               <div className="mt-5 rounded-[24px] border border-stone-200 bg-stone-50 px-5 py-4 text-sm leading-6 text-stone-700">
                 <p>
-                  {hasAnthropicProxy()
-                    ? "Live Anthropic proxy configured. Uploaded PDFs will be analyzed with Claude using document input blocks."
-                    : "No Anthropic proxy detected. The app will still run end-to-end using the bundled UrbanRoof sample case and prompt structure."}
+                  {hasGeminiProxy()
+                    ? "Gemini analysis route configured. Uploaded PDFs will be analyzed through the server-side Gemini proxy."
+                    : "No Gemini proxy detected. The app will still run end-to-end using the bundled UrbanRoof sample case and prompt structure."}
                 </p>
               </div>
 
@@ -216,7 +214,7 @@ export default function App() {
             </div>
 
             {report ? (
-              <div ref={previewRef}>
+              <div>
                 <ReportPreview report={report} propertyDetails={propertyDetails} />
               </div>
             ) : (

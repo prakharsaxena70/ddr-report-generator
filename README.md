@@ -5,28 +5,30 @@ A production-ready React application for UrbanRoof that turns thermal-inspection
 ## What it does
 
 - Accepts property metadata, a thermal-images PDF, and an inspection/checklist PDF
-- Sends PDFs to Anthropic Claude using `document` content blocks through a proxy endpoint
+- Sends PDFs to Google Gemini 2.5 Flash through a server-side proxy endpoint
 - Uses UrbanRoof-specific prompts for:
   - thermal analysis
   - inspection form extraction
   - full DDR generation
 - Cross-correlates thermal anomalies with inspection findings
 - Renders a structured DDR preview in UrbanRoof styling
-- Exports the preview to PDF using `html2canvas` + `jsPDF`
+- Exports the preview to PDF using `jsPDF`
 - Includes a bundled sample case based on the supplied UrbanRoof brief so the app still runs without live PDFs or API credentials
 
 ## Tech stack
 
 - React + Vite
 - Tailwind CSS
-- Anthropic Claude API via proxy
-- jsPDF + html2canvas for PDF export
+- Google Gemini 2.5 Flash via Vercel serverless proxy
+- jsPDF for PDF export
 
 ## Repo structure
 
 ```text
 /urbanroof-ai-diagnosis
 ├── README.md
+├── api/
+│   └── gemini.js
 ├── single-artifact/
 │   └── UrbanRoofDiagnosisArtifact.jsx
 ├── sample-output/
@@ -45,7 +47,7 @@ A production-ready React application for UrbanRoof that turns thermal-inspection
 │   ├── data/
 │   │   └── sampleData.js
 │   ├── services/
-│   │   ├── claudeApi.js
+│   │   ├── geminiApi.js
 │   │   ├── reportGenerator.js
 │   │   └── thermalAnalyzer.js
 │   └── utils/
@@ -67,14 +69,15 @@ A production-ready React application for UrbanRoof that turns thermal-inspection
 npm install
 ```
 
-2. Configure environment variables in `.env.local`:
+2. Configure environment variables in `.env.local` if you want local live Gemini analysis:
 
 ```bash
-VITE_ANTHROPIC_PROXY_URL=https://your-proxy.example.com/v1/messages
-VITE_ANTHROPIC_MODEL=claude-sonnet-4-20250514
+VITE_GEMINI_PROXY_URL=http://localhost:3000/api/gemini
+VITE_GEMINI_MODEL=gemini-2.5-flash
+GEMINI_API_KEY=your_server_side_key_here
 ```
 
-`VITE_ANTHROPIC_PROXY_URL` should point to your proxy or serverless function that securely injects the Anthropic API key before forwarding the request to the Anthropic Messages API.
+For Vercel production, the frontend can call `/api/gemini` on the same deployment and you only need to set the server-side `GEMINI_API_KEY` secret in Vercel. `VITE_GEMINI_PROXY_URL` is optional in production.
 
 3. Start the app:
 
@@ -88,16 +91,18 @@ npm run dev
 npm run build
 ```
 
-## Anthropic request shape
+## Gemini request shape
 
-The app sends uploaded PDFs to Claude using the supported `document` content block pattern and targets `claude-sonnet-4-20250514`. This matches Anthropic’s official model list and PDF-support documentation:
+The app sends uploaded PDFs to Gemini using inline PDF data and targets `gemini-2.5-flash`. This follows Google's official Gemini documentation for document understanding and text generation:
 
-- [Anthropic models overview](https://docs.anthropic.com/en/docs/about-claude/models/all-models)
-- [Anthropic PDF support](https://platform.claude.com/docs/en/build-with-claude/pdf-support)
+- [Gemini API overview](https://ai.google.dev/gemini-api/docs)
+- [Gemini document processing](https://ai.google.dev/gemini-api/docs/document-processing)
+- [Gemini text generation](https://ai.google.dev/gemini-api/docs/text-generation)
+- [Gemini files API reference](https://ai.google.dev/api/files)
 
 ## UrbanRoof prompt logic
 
-The exact assignment prompts are implemented in [src/services/claudeApi.js](/C:/Users/ASUS/OneDrive/Desktop/DDR%20GENERATOR/src/services/claudeApi.js):
+The exact assignment prompts are implemented in [src/services/geminiApi.js](/C:/Users/ASUS/OneDrive/Desktop/DDR%20GENERATOR/src/services/geminiApi.js):
 
 - `THERMAL_ANALYSIS_PROMPT`
 - `INSPECTION_ANALYSIS_PROMPT`
@@ -105,7 +110,7 @@ The exact assignment prompts are implemented in [src/services/claudeApi.js](/C:/
 
 ## Sample case behavior
 
-If no PDF is uploaded, or if the Anthropic proxy is not configured, the app automatically uses bundled sample data based on the assignment:
+If no PDF is uploaded, or if the Gemini proxy is not configured, the app automatically uses bundled sample data based on the assignment:
 
 - 30 thermal image IDs from `RB02377X` to `RB02406X`
 - date `27/09/2022`
@@ -120,7 +125,7 @@ This lets you demo the entire workflow immediately.
 
 ## PDF output
 
-The browser-exported PDF is created from the styled report preview and includes:
+The browser-exported PDF includes:
 
 - branded cover page
 - disclaimer
@@ -148,6 +153,7 @@ This creates:
 
 ## Deployment notes
 
-- Vercel and Netlify are both suitable for hosting the frontend
-- the Anthropic API key must stay behind a proxy/serverless function
-- if you want richer PDF fidelity later, you can swap the browser export path for a Puppeteer-based server render without changing the report schema
+- Vercel is the cleanest target because the repo already includes `api/gemini.js`
+- Keep `GEMINI_API_KEY` only in Vercel environment variables, not in frontend code
+- Set `GEMINI_MODEL=gemini-2.5-flash` on Vercel if you want to override the default
+- If you want richer PDF fidelity later, you can swap the browser export path for a Puppeteer-based server render without changing the report schema

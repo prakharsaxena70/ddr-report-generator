@@ -1,4 +1,4 @@
-import { sendClaudeRequest, THERMAL_ANALYSIS_PROMPT } from "./claudeApi";
+import { sendGeminiRequest, THERMAL_ANALYSIS_PROMPT } from "./geminiApi";
 import { sampleThermalAnalysis } from "../data/sampleData";
 
 function normalizeThermalEntry(entry) {
@@ -22,7 +22,7 @@ export async function analyzeThermalDocument({ file, propertyDetails }) {
   }
 
   try {
-    const result = await sendClaudeRequest({
+    const result = await sendGeminiRequest({
       prompt: THERMAL_ANALYSIS_PROMPT,
       file,
       context: {

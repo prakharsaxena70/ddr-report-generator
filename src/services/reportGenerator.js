@@ -1,8 +1,8 @@
 import {
   INSPECTION_ANALYSIS_PROMPT,
   REPORT_GENERATION_PROMPT,
-  sendClaudeRequest,
-} from "./claudeApi";
+  sendGeminiRequest,
+} from "./geminiApi";
 import {
   sampleInspectionAnalysis,
   samplePropertyDetails,
@@ -205,7 +205,7 @@ export async function analyzeInspectionDocument({ file, propertyDetails }) {
   }
 
   try {
-    const result = await sendClaudeRequest({
+    const result = await sendGeminiRequest({
       prompt: INSPECTION_ANALYSIS_PROMPT,
       file,
       context: {
@@ -233,7 +233,7 @@ export async function generateDiagnosisReport({
   });
 
   try {
-    const result = await sendClaudeRequest({
+    const result = await sendGeminiRequest({
       prompt: REPORT_GENERATION_PROMPT,
       context: {
         propertyDetails,

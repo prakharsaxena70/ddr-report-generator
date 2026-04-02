@@ -27,7 +27,7 @@ export default function FileUpload({
             {file ? file.name : "Choose a PDF or continue with the bundled sample case"}
           </p>
           <p className="mt-2 text-sm text-stone-600">
-            PDF document input will be sent to Claude through your configured proxy. If no
+            PDF document input will be sent to Gemini through your configured proxy. If no
             file is uploaded, the app uses UrbanRoof sample findings from the supplied brief.
           </p>
         </div>
