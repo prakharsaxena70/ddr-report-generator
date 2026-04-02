@@ -1,0 +1,92 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color: #202020;
+  background:
+    radial-gradient(circle at top left, rgba(245, 166, 35, 0.2), transparent 36%),
+    radial-gradient(circle at bottom right, rgba(141, 198, 63, 0.18), transparent 30%),
+    #f3ecdf;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  min-width: 320px;
+  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+  color: #202020;
+}
+
+#root {
+  min-height: 100vh;
+}
+
+.report-shell {
+  background:
+    linear-gradient(135deg, rgba(245, 166, 35, 0.08), transparent 35%),
+    linear-gradient(315deg, rgba(141, 198, 63, 0.08), transparent 35%),
+    #fefcf8;
+}
+
+.report-page {
+  position: relative;
+  width: 794px;
+  min-height: 1123px;
+  margin: 0 auto 24px;
+  background: white;
+  box-shadow: 0 18px 45px rgba(0, 0, 0, 0.12);
+  overflow: hidden;
+}
+
+.report-page::before {
+  content: "";
+  position: absolute;
+  inset: 18px;
+  border: 1px solid rgba(45, 45, 45, 0.08);
+  pointer-events: none;
+}
+
+.brand-rule {
+  height: 4px;
+  background: linear-gradient(90deg, #8dc63f, #f5a623 72%, #e8941a);
+}
+
+.toc-list li::marker {
+  color: #e8941a;
+}
+
+.check-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  border-radius: 999px;
+  border: 1px solid rgba(45, 45, 45, 0.1);
+  background: rgba(250, 248, 243, 0.95);
+  padding: 6px 12px;
+  font-size: 13px;
+}
+
+.table-cell {
+  border: 1px solid rgba(45, 45, 45, 0.1);
+  padding: 10px 12px;
+  vertical-align: top;
+}
+
+@media (max-width: 960px) {
+  .report-page {
+    width: 100%;
+    min-height: auto;
+  }
+
+  .report-page::before {
+    inset: 10px;
+  }
+}

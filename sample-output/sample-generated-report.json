@@ -1,0 +1,250 @@
+{
+  "propertyDetails": {
+    "propertyAddress": "Flat 202, UrbanRoof Sample Site, Baner Road, Pune, Maharashtra 411045",
+    "inspectorName": "Krushna & Mahesh",
+    "inspectionDate": "2022-09-27",
+    "propertyType": "Flat",
+    "floors": "11",
+    "propertyAge": "8",
+    "clientName": "UrbanRoof Demo Client"
+  },
+  "inspection": {
+    "propertyHealthScore": 85.71,
+    "propertyType": "Flat",
+    "floors": 11,
+    "previousAuditOrRepairs": "No previous audit or repair history reported",
+    "inspectionDate": "27.09.2022",
+    "inspectors": [
+      "Krushna",
+      "Mahesh"
+    ],
+    "impactedAreas": [
+      {
+        "area": "Hall",
+        "description": "Dampness visible at lower wall/skirting with paint blistering and mild fungal spotting.",
+        "severity": "moderate",
+        "observedAt": "Negative side"
+      },
+      {
+        "area": "Bedroom",
+        "description": "Mold growth and moisture staining along wall finish adjacent to bathroom zone.",
+        "severity": "immediate",
+        "observedAt": "Negative side"
+      },
+      {
+        "area": "Master Bedroom",
+        "description": "Cold-wall dampness with surface discoloration and recurring seepage marks.",
+        "severity": "moderate",
+        "observedAt": "Negative side"
+      },
+      {
+        "area": "Kitchen",
+        "description": "Moisture traces near shaft wall and lower plaster softening.",
+        "severity": "moderate",
+        "observedAt": "Negative side"
+      },
+      {
+        "area": "Master Bedroom Wall",
+        "description": "Localized damp patch near corner/ceiling junction suggesting migration from upper wet area.",
+        "severity": "moderate",
+        "observedAt": "Negative side"
+      },
+      {
+        "area": "Parking Area",
+        "description": "Thermal cold patches and dampness at beam-column interface below wet area stack.",
+        "severity": "immediate",
+        "observedAt": "Negative side"
+      },
+      {
+        "area": "Common Bathroom Ceiling",
+        "description": "Water ingress band and flaking finish at ceiling level, likely from tile joints above.",
+        "severity": "immediate",
+        "observedAt": "Negative side"
+      }
+    ],
+    "positiveSideInputs": [
+      {
+        "area": "Flat 203 Bathroom",
+        "description": "Open tile joints, hollow-sounding tiles and likely seepage through floor/wall interfaces.",
+        "risk": "high"
+      },
+      {
+        "area": "Balcony",
+        "description": "Grout deterioration and threshold ponding path allowing migration under tile bed.",
+        "risk": "medium"
+      },
+      {
+        "area": "Terrace/Upper Wet Area",
+        "description": "Potential slab and waterproofing defects contributing to ceiling level ingress.",
+        "risk": "medium"
+      },
+      {
+        "area": "External Wall",
+        "description": "Moderate facade cracks, algae/fungus staining and plumbing-related wetting on outer face.",
+        "risk": "high"
+      }
+    ],
+    "checklistResponses": {
+      "bathroom": {
+        "selected": true,
+        "notes": "Bathroom tile joint hollowness and open joints identified in Flat 203."
+      },
+      "balcony": {
+        "selected": true,
+        "notes": "Threshold wetness and grout deterioration observed."
+      },
+      "terrace": {
+        "selected": true,
+        "notes": "Possible delayed waterproofing distress affecting ceiling band."
+      },
+      "externalWall": {
+        "selected": true,
+        "notes": "Moderate cracks, algae/fungus and external plumbing issues noted."
+      }
+    },
+    "summaryTable": [
+      {
+        "impactedArea": "Bedroom / Hall wall",
+        "exposedArea": "Flat 203 bathroom",
+        "link": "Open tile joints and hollow tiles transferring moisture through masonry."
+      },
+      {
+        "impactedArea": "Common bathroom ceiling",
+        "exposedArea": "Upper wet area / slab interface",
+        "link": "Ingress at ceiling level due to failed tile or slab waterproofing detail."
+      },
+      {
+        "impactedArea": "Parking area beam-column zone",
+        "exposedArea": "Vertical wet stack",
+        "link": "Repeated saturation moving down service alignment."
+      },
+      {
+        "impactedArea": "External wall affected rooms",
+        "exposedArea": "Facade cracks and plumbing line",
+        "link": "Rainwater penetration and outer wall wetting contributing to dampness."
+      }
+    ]
+  },
+  "thermalSample": [
+    {
+      "imageId": "RB02377X",
+      "date": "27/09/2022",
+      "hotspot": 25.1,
+      "coldspot": 22.7,
+      "emissivity": 0.94,
+      "reflectedTemperature": 23,
+      "thermalPattern": "Minor thermal drift near skirting with no strong moisture signature.",
+      "diagnosis": "Monitor wall base for progression.",
+      "severity": "monitor",
+      "location": "Hall skirting wall"
+    },
+    {
+      "imageId": "RB02378X",
+      "date": "27/09/2022",
+      "hotspot": 25.6,
+      "coldspot": 22.4,
+      "emissivity": 0.94,
+      "reflectedTemperature": 23,
+      "thermalPattern": "Cold edge variation suggests residual dampness migrating from adjacent wall corner.",
+      "diagnosis": "Moderate dampness tied to adjacent wet-area loading.",
+      "severity": "moderate",
+      "location": "Hall wall corner"
+    },
+    {
+      "imageId": "RB02379X",
+      "date": "27/09/2022",
+      "hotspot": 28.8,
+      "coldspot": 21.8,
+      "emissivity": 0.94,
+      "reflectedTemperature": 23,
+      "thermalPattern": "Strong hotspot over mold-affected plaster with visible dampness, indicating active leakage path.",
+      "diagnosis": "Immediate intervention required at wet wall and mold-affected zone.",
+      "severity": "immediate",
+      "location": "Bedroom damp wall"
+    },
+    {
+      "imageId": "RB02380X",
+      "date": "27/09/2022",
+      "hotspot": 26.4,
+      "coldspot": 22.2,
+      "emissivity": 0.94,
+      "reflectedTemperature": 23,
+      "thermalPattern": "Patchy cool zone along ceiling line suggests early seepage through slab joint.",
+      "diagnosis": "Moderate seepage from slab joint or wet room above.",
+      "severity": "moderate",
+      "location": "Common bathroom ceiling"
+    },
+    {
+      "imageId": "RB02381X",
+      "date": "27/09/2022",
+      "hotspot": 26.8,
+      "coldspot": 22.6,
+      "emissivity": 0.94,
+      "reflectedTemperature": 23,
+      "thermalPattern": "Uneven wall cooling with evaporation trace indicates trapped moisture behind plaster.",
+      "diagnosis": "Damp substrate behind plaster; investigate bathroom adjacency.",
+      "severity": "moderate",
+      "location": "Master bedroom wall"
+    },
+    {
+      "imageId": "RB02382X",
+      "date": "27/09/2022",
+      "hotspot": 27.1,
+      "coldspot": 22.5,
+      "emissivity": 0.94,
+      "reflectedTemperature": 23,
+      "thermalPattern": "Mild thermal bridge near plumbing chase; monitor for concealed line loss.",
+      "diagnosis": "Possible concealed plumbing issue; correlate with inspection inputs.",
+      "severity": "moderate",
+      "location": "Bathroom plumbing chase"
+    },
+    {
+      "imageId": "RB02383X",
+      "date": "27/09/2022",
+      "hotspot": 27.5,
+      "coldspot": 22.1,
+      "emissivity": 0.94,
+      "reflectedTemperature": 23,
+      "thermalPattern": "Warm-to-cool gradient around balcony wall suggests water tracking across grout lines.",
+      "diagnosis": "Balcony grout failure allowing lateral moisture movement.",
+      "severity": "moderate",
+      "location": "Balcony inside face"
+    },
+    {
+      "imageId": "RB02384X",
+      "date": "27/09/2022",
+      "hotspot": 26.9,
+      "coldspot": 22.3,
+      "emissivity": 0.94,
+      "reflectedTemperature": 23,
+      "thermalPattern": "Stable wall surface with isolated cooler point near window jamb.",
+      "diagnosis": "Low severity anomaly with no confirmed active source.",
+      "severity": "monitor",
+      "location": "Window jamb"
+    },
+    {
+      "imageId": "RB02385X",
+      "date": "27/09/2022",
+      "hotspot": 27.8,
+      "coldspot": 20.8,
+      "emissivity": 0.94,
+      "reflectedTemperature": 23,
+      "thermalPattern": "Distinct blue patch consistent with active moisture accumulation behind finish.",
+      "diagnosis": "Active seepage at negative side wall finish.",
+      "severity": "immediate",
+      "location": "Parking area column face"
+    },
+    {
+      "imageId": "RB02386X",
+      "date": "27/09/2022",
+      "hotspot": 27.9,
+      "coldspot": 20.6,
+      "emissivity": 0.94,
+      "reflectedTemperature": 23,
+      "thermalPattern": "Distinct blue patch with cold center confirming active moisture spread.",
+      "diagnosis": "Active moisture ingress with elevated deterioration risk.",
+      "severity": "immediate",
+      "location": "Parking area beam junction"
+    }
+  ]
+}
