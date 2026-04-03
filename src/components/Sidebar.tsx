@@ -1,6 +1,6 @@
 "use client";
 
-import { StoredSession, User } from "@/lib/types";
+import { SessionData, User } from "@/lib/types";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
@@ -37,7 +37,7 @@ import { useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
 
 interface SidebarProps {
-  sessions: StoredSession[];
+  sessions: SessionData[];
   activeSessionId: string | null;
   onSelectSession: (id: string) => void;
   onUpdateSession: (id: string, updates: { nickname?: string; is_starred?: boolean }) => void;
@@ -227,7 +227,7 @@ export default function Sidebar({
                         {s.nickname || s.filename.replace(/\.[^/.]+$/, "")}
                       </p>
                       <p className="text-[10px] text-slate-500 font-medium mt-0.5">
-                        {formatDate(s.createdAt)}
+                        {formatDate(s.created_at || "")}
                       </p>
                     </div>
                     

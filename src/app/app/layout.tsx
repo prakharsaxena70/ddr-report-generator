@@ -5,7 +5,7 @@ import { useRouter, usePathname } from "next/navigation";
 import Sidebar from "@/components/Sidebar";
 import { getUserSessions, deleteSession as apiDeleteSession } from "@/lib/api";
 import { useAuth } from "@/components/AuthProvider";
-import { StoredSession } from "@/lib/types";
+import { SessionData } from "@/lib/types";
 import { Loader2 } from "lucide-react";
 
 export default function AppLayout({
@@ -17,7 +17,7 @@ export default function AppLayout({
   const pathname = usePathname();
   const { user, isAuthenticated, logout } = useAuth();
   
-  const [sessions, setSessions] = useState<StoredSession[]>([]);
+  const [sessions, setSessions] = useState<SessionData[]>([]);
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -32,7 +32,7 @@ export default function AppLayout({
       try {
         setIsLoading(true);
         const data = await getUserSessions();
-        setSessions(data.sessions || []);
+        setSessions(Array.isArray(data) ? data : []);
       } catch (err) {
         console.error("Failed to load sessions:", err);
       } finally {

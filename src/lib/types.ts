@@ -76,8 +76,11 @@ export interface StoredSession {
   filename: string;
   nickname?: string | null;
   is_starred?: boolean;
-  createdAt: string;
-  shape?: { rows: number; columns: number };
+  created_at?: string | null;
+  file_meta?: {
+    shape?: { rows: number; columns: number };
+    pdf_data?: PDFData;
+  };
 }
 
 // Auth Types
