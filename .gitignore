@@ -5,3 +5,9 @@ dist/
 .DS_Store
 
 .vercel
+
+# scratch / temp files
+*.txt
+testAPI.mjs
+out.txt
+~$*.pdf
