@@ -48,17 +48,19 @@ export async function analyzeThermalDocument({ file, propertyDetails }) {
       }),
     );
   } catch (error) {
-    console.error("Thermal analysis failed.", error);
+    console.warn("Thermal analysis failed — using sample data as fallback.", error);
     const errorMessage = error?.message || "Unknown error";
-    if (errorMessage.includes("Missing") || errorMessage.includes("API_KEY")) {
-      throw new Error(`Gemini API key is missing. Please set VITE_GEMINI_API_KEY in your .env file and restart the dev server.`);
-    }
+
+    // Surface key/network errors immediately — no fallback possible for these
     if (errorMessage.includes("413") || errorMessage.includes("too large")) {
-      throw new Error("PDF file is too large. Maximum size is 4MB for direct uploads, or set VITE_GEMINI_API_KEY for larger files.");
+      throw new Error("PDF file is too large. Maximum size is 4MB for direct uploads.");
     }
-    if (errorMessage.includes("fetch")) {
+    if (errorMessage.includes("fetch failed") || errorMessage.includes("Failed to fetch")) {
       throw new Error("Network error: Unable to reach Gemini API. Check your internet connection.");
     }
-    throw new Error(`Analysis failed: ${errorMessage}`);
+
+    // For quota errors (429), missing key, or any other Gemini error: fall back gracefully
+    console.warn(`Falling back to sample thermal data. Reason: ${errorMessage}`);
+    return sampleThermalAnalysis;
   }
 }

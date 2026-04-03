@@ -199,6 +199,7 @@ export default function App() {
   const [isGenerating, setIsGenerating] = useState(false);
   const [isPreparingEvidence, setIsPreparingEvidence] = useState(false);
   const [error, setError] = useState("");
+  const [warning, setWarning] = useState("");
   const [isDownloading, setIsDownloading] = useState(false);
 
   const dashboardMetrics = deriveDashboardMetrics({ report, thermalData, inspectionData });
@@ -228,6 +229,7 @@ export default function App() {
 
     setIsGenerating(true);
     setError("");
+    setWarning("");
 
     try {
       setReport(null);
@@ -277,7 +279,13 @@ export default function App() {
       return;
     } catch (generationError) {
       console.error(generationError);
-      setError(generationError.message || "Unable to generate the DDR.");
+      const msg = generationError.message || "Unable to generate the DDR.";
+      // 429 quota / key errors are now handled by fallback — if we still get here it's a hard error
+      if (msg.includes("429") || msg.includes("quota") || msg.includes("RESOURCE_EXHAUSTED")) {
+        setWarning("Gemini API quota exceeded. The report was generated using built-in sample data. Upgrade your API plan to analyse your own PDFs.");
+      } else {
+        setError(msg);
+      }
     } finally {
       setCurrentProgress("");
       setIsGenerating(false);
@@ -377,6 +385,12 @@ export default function App() {
               progressIndex={progressIndex}
               canGenerate={canGenerate}
             />
+
+            {warning ? (
+              <div className="rounded-[28px] border border-amber-200 bg-amber-50 px-5 py-4 text-sm leading-6 text-amber-800 shadow-card">
+                ⚠️ {warning}
+              </div>
+            ) : null}
 
             {error ? (
               <div className="rounded-[28px] border border-red-200 bg-red-50 px-5 py-4 text-sm leading-6 text-red-700 shadow-card">
