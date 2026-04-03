@@ -490,7 +490,7 @@ export async function exportReportPdf({
   y = writeParagraph(pdf, report.propertyIssueSummary.overview, y, { marginBottom: 10 });
   y = drawBulletList(pdf, y, "Key Findings", report.propertyIssueSummary.keyFindings, title, subtitle);
 
-  y = ensurePage(pdf, y, 120, title, subtitle);
+  y = ensurePage(pdf, y, 80, title, subtitle);
   y = drawSectionTitle(pdf, y, "2. Area-wise Observations", "Section 2");
   for (let index = 0; index < report.areaWiseObservations.length; index += 1) {
     const item = report.areaWiseObservations[index];
@@ -565,8 +565,12 @@ export async function exportReportPdf({
     subtitle,
   );
 
-  y = ensurePage(pdf, y, 120, title, subtitle);
-  y = drawSectionTitle(pdf, y, "8. Conflicting Details", "Section 8");
+  y = ensurePage(pdf, y, 60, title, subtitle);
+  pdf.setFont("helvetica", "bold");
+  pdf.setFontSize(11);
+  pdf.setTextColor(...createPalette().stone);
+  pdf.text("Conflicting Details", PAGE.left, y);
+  y += 14;
   drawBulletCard(
     pdf,
     y,

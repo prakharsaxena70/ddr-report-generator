@@ -235,7 +235,7 @@ function SummaryTable({ title, headers, rows }) {
 
 export default function ReportPreview({ report, propertyDetails, isPreparingEvidence = false }) {
   const observationChunks = chunkArray(report.areaWiseObservations || [], 2);
-  const totalPages = 4 + observationChunks.length;
+  const totalPages = 3 + observationChunks.length;
 
   return (
     <div id="report-preview" className="report-shell rounded-[36px] border border-white/60 p-4 md:p-6">
@@ -291,9 +291,9 @@ export default function ReportPreview({ report, propertyDetails, isPreparingEvid
                 </div>
                 <div>
                   <p className="text-xs font-semibold uppercase tracking-[0.25em] text-amberdeep">
-                    Floors
+                    Floors / Property Age
                   </p>
-                  <p className="mt-2 font-semibold">{propertyDetails.floors}</p>
+                  <p className="mt-2 font-semibold">{propertyDetails.floors} floors · {propertyDetails.propertyAge} yrs</p>
                 </div>
               </div>
             </div>
@@ -302,7 +302,7 @@ export default function ReportPreview({ report, propertyDetails, isPreparingEvid
       </PageFrame>
 
       <PageFrame pageNumber={2} totalPages={totalPages}>
-        <SectionHeading index="1" title="Property Issue Summary" />
+        <SectionHeading index="Section 1" title="Property Issue Summary" />
         <div className="rounded-[28px] border border-stone-200 bg-stone-50 p-6">
           <p className="text-lg font-semibold text-charcoal">{report.propertyIssueSummary.headline}</p>
           <p className="mt-4 text-sm leading-7 text-stone-700">{report.propertyIssueSummary.overview}</p>
@@ -314,7 +314,7 @@ export default function ReportPreview({ report, propertyDetails, isPreparingEvid
         </div>
 
         <div className="mt-8">
-          <SectionHeading index="2" title="Property Details" />
+          <p className="mb-3 text-xs font-semibold uppercase tracking-[0.25em] text-stone-500">Property Details</p>
           <InfoTable
             rows={[
               ["Property Address", propertyDetails.propertyAddress],
@@ -331,7 +331,7 @@ export default function ReportPreview({ report, propertyDetails, isPreparingEvid
       {observationChunks.map((chunk, index) => (
         <PageFrame key={`observation-page-${index + 1}`} pageNumber={3 + index} totalPages={totalPages}>
           <SectionHeading
-            index="3"
+            index="Section 2"
             title={`Area-wise Observations${observationChunks.length > 1 ? ` (${index + 1}/${observationChunks.length})` : ""}`}
           />
           <div className="space-y-6">
@@ -347,7 +347,7 @@ export default function ReportPreview({ report, propertyDetails, isPreparingEvid
       ))}
 
       <PageFrame pageNumber={totalPages - 1} totalPages={totalPages}>
-        <SectionHeading index="4" title="Probable Root Cause" />
+        <SectionHeading index="Section 3" title="Probable Root Cause" />
         <SummaryTable
           title="Root Cause Summary"
           headers={["Area", "Probable Root Cause", "Supporting Evidence"]}
@@ -355,8 +355,9 @@ export default function ReportPreview({ report, propertyDetails, isPreparingEvid
         />
 
         <div className="mt-8">
+          <SectionHeading index="Section 4" title="Severity Assessment" />
           <SummaryTable
-            title="Severity Assessment"
+            title=""
             headers={["Area", "Severity", "Reasoning"]}
             rows={report.severityAssessment.map((item) => [
               item.area,
@@ -367,8 +368,9 @@ export default function ReportPreview({ report, propertyDetails, isPreparingEvid
         </div>
 
         <div className="mt-8">
+          <SectionHeading index="Section 5" title="Recommended Actions" />
           <SummaryTable
-            title="Recommended Actions"
+            title=""
             headers={["Area", "Action", "Priority", "Reasoning"]}
             rows={report.recommendedActions.map((item) => [
               item.area,
@@ -381,7 +383,7 @@ export default function ReportPreview({ report, propertyDetails, isPreparingEvid
       </PageFrame>
 
       <PageFrame pageNumber={totalPages} totalPages={totalPages}>
-        <SectionHeading index="5" title="Additional Notes" />
+        <SectionHeading index="Section 6" title="Additional Notes" />
         <div className="rounded-[24px] border border-stone-200 bg-stone-50 p-5">
           <ul className="ml-5 space-y-2 text-sm leading-7 text-stone-700">
             {report.additionalNotes.map((item) => (
@@ -391,7 +393,7 @@ export default function ReportPreview({ report, propertyDetails, isPreparingEvid
         </div>
 
         <div className="mt-8">
-          <SectionHeading index="6" title="Missing or Unclear Information" />
+          <SectionHeading index="Section 7" title="Missing or Unclear Information" />
           <div className="rounded-[24px] border border-stone-200 bg-rose-50/60 p-5">
             <ul className="ml-5 space-y-2 text-sm leading-7 text-stone-700">
               {report.missingOrUnclearInformation.map((item) => (
@@ -402,7 +404,7 @@ export default function ReportPreview({ report, propertyDetails, isPreparingEvid
         </div>
 
         <div className="mt-8">
-          <SectionHeading index="7" title="Conflicting Details" />
+          <p className="mb-2 text-xs font-semibold uppercase tracking-[0.25em] text-stone-500">Conflicting Details</p>
           <div className="rounded-[24px] border border-stone-200 bg-sky-50/60 p-5">
             <ul className="ml-5 space-y-2 text-sm leading-7 text-stone-700">
               {report.conflicts.map((item) => (

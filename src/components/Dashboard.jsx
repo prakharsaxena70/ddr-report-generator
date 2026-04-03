@@ -38,7 +38,7 @@ export default function Dashboard({ metrics }) {
           </p>
         </div>
         <div className="rounded-2xl border border-stone-200 bg-canvas px-4 py-3 text-xs font-semibold uppercase tracking-[0.18em] text-charcoal">
-          Recruiter-friendly snapshot
+          AI Diagnosis Summary
         </div>
       </div>
 

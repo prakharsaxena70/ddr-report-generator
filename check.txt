@@ -1,0 +1,19 @@
+﻿commit 726336d323a33132926a9c0ad88cf54bd39b8a34
+Author: prakharsaxena70 <saxenaprakhar921@gmail.com>
+Date:   Fri Apr 3 22:17:19 2026 +0530
+
+    fix: add Vercel routing configuration and fix Vite env setup
+
+ vercel.json    | 13 +++++++++++++
+ vite.config.js | 18 ++++++++++++------
+ 2 files changed, 25 insertions(+), 6 deletions(-)
+
+commit 3dc30b0a207dde495c161169f2cf7cece5eeba46
+Author: prakharsaxena70 <saxenaprakhar921@gmail.com>
+Date:   Fri Apr 3 17:29:45 2026 +0530
+
+    Improve error messages in PDF analysis
+
+ src/services/reportGenerator.js | 14 +++++++++++---
+ src/services/thermalAnalyzer.js | 14 +++++++++++---
+ 2 files changed, 22 insertions(+), 6 deletions(-)
