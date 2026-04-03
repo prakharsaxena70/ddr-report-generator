@@ -7,7 +7,7 @@ import PDFImageViewer from "@/components/PDFImageViewer";
 import { getSession, sendMessageStream, uploadFile } from "@/lib/api";
 import { ChatMessage, DataPreview, PDFData } from "@/lib/types";
 import { Loader2, FileImage } from "lucide-react";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+
 
 export default function ChatPage() {
   const params = useParams();
