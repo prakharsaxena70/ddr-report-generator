@@ -1,4 +1,10 @@
 let pdfjsModulePromise;
+const PDF_OBJECT_TIMEOUT_MS = 600;
+const OPERATOR_LIST_TIMEOUT_MS = 1200;
+const EMBEDDED_EXTRACTION_TIMEOUT_MS = 1800;
+const PAGE_RENDER_TIMEOUT_MS = 2500;
+const PAGE_LOAD_TIMEOUT_MS = 1200;
+const TOTAL_EVIDENCE_TIMEOUT_MS = 12000;
 
 async function getPdfJs() {
   if (!pdfjsModulePromise) {
@@ -17,6 +23,15 @@ async function getPdfJs() {
 async function fileToUint8Array(file) {
   const arrayBuffer = await file.arrayBuffer();
   return new Uint8Array(arrayBuffer);
+}
+
+function withTimeout(promise, timeoutMs, fallbackValue = null) {
+  return Promise.race([
+    promise,
+    new Promise((resolve) => {
+      window.setTimeout(() => resolve(fallbackValue), timeoutMs);
+    }),
+  ]);
 }
 
 function ensureText(value, fallback = "") {
@@ -264,21 +279,32 @@ function isUsefulEvidenceImage(imageObject) {
 }
 
 function awaitPdfObject(objects, objectId) {
-  return new Promise((resolve) => {
-    try {
-      if (objects.has(objectId)) {
-        resolve(objects.get(objectId));
-        return;
+  return withTimeout(
+    new Promise((resolve) => {
+      try {
+        if (objects.has(objectId)) {
+          resolve(objects.get(objectId));
+          return;
+        }
+        objects.get(objectId, (data) => resolve(data));
+      } catch (error) {
+        resolve(null);
       }
-      objects.get(objectId, (data) => resolve(data));
-    } catch (error) {
-      resolve(null);
-    }
-  });
+    }),
+    PDF_OBJECT_TIMEOUT_MS,
+    null,
+  );
 }
 
 async function extractEmbeddedImagesFromPage(page, pdfjs) {
-  const operatorList = await page.getOperatorList();
+  const operatorList = await withTimeout(
+    page.getOperatorList(),
+    OPERATOR_LIST_TIMEOUT_MS,
+    null,
+  );
+  if (!operatorList) {
+    return [];
+  }
   const refs = [];
 
   for (let index = 0; index < operatorList.fnArray.length; index += 1) {
@@ -294,7 +320,7 @@ async function extractEmbeddedImagesFromPage(page, pdfjs) {
 
   const extracted = [];
 
-  for (const ref of refs) {
+  for (const ref of refs.slice(0, 6)) {
     const rawObject =
       ref.type === "object" ? await awaitPdfObject(page.objs, ref.value) : ref.value;
 
@@ -330,7 +356,11 @@ async function renderPageFallback(page, scale = 0.85) {
   const canvas = createCanvas(Math.ceil(viewport.width), Math.ceil(viewport.height));
   const context = canvas.getContext("2d");
 
-  await page.render({ canvasContext: context, viewport }).promise;
+  await withTimeout(
+    page.render({ canvasContext: context, viewport }).promise,
+    PAGE_RENDER_TIMEOUT_MS,
+    null,
+  );
   return canvas.toDataURL("image/jpeg", 0.82);
 }
 
@@ -342,44 +372,65 @@ async function extractEvidenceByPage({ file, pageNumbers, reportLabel }) {
   const pdfjs = await getPdfJs();
   const bytes = await fileToUint8Array(file);
   const pdf = await pdfjs.getDocument({ data: bytes }).promise;
-  const extractedByPage = {};
-
-  for (const pageNumber of normalizePages(pageNumbers)) {
-    if (pageNumber > pdf.numPages) {
-      continue;
-    }
-
-    try {
-      const page = await pdf.getPage(pageNumber);
-      let embedded = [];
+  const pageEntries = await Promise.all(
+    normalizePages(pageNumbers).map(async (pageNumber) => {
+      if (pageNumber > pdf.numPages) {
+        return null;
+      }
 
       try {
-        embedded = await extractEmbeddedImagesFromPage(page, pdfjs);
-      } catch (embeddedError) {
-        console.warn(`Embedded image extraction failed for ${reportLabel} page ${pageNumber}.`, embeddedError);
-      }
+        const page = await withTimeout(pdf.getPage(pageNumber), PAGE_LOAD_TIMEOUT_MS, null);
+        if (!page) {
+          return null;
+        }
 
-      if (embedded.length) {
-        extractedByPage[pageNumber] = embedded.map((item, index) => ({
-          src: item.src,
-          label: `${reportLabel} Extracted Image ${index + 1} (Page ${pageNumber})`,
-        }));
-        continue;
-      }
+        let embedded = [];
 
-      extractedByPage[pageNumber] = [
-        {
-          src: await renderPageFallback(page),
-          label: `${reportLabel} Page Snapshot (${pageNumber})`,
-        },
-      ];
-    } catch (pageError) {
-      console.warn(`Evidence extraction failed for ${reportLabel} page ${pageNumber}.`, pageError);
-    }
-  }
+        try {
+          embedded =
+            (await withTimeout(
+              extractEmbeddedImagesFromPage(page, pdfjs),
+              EMBEDDED_EXTRACTION_TIMEOUT_MS,
+              [],
+            )) || [];
+        } catch (embeddedError) {
+          console.warn(
+            `Embedded image extraction failed for ${reportLabel} page ${pageNumber}.`,
+            embeddedError,
+          );
+        }
+
+        if (embedded.length) {
+          page.cleanup();
+          return [
+            pageNumber,
+            embedded.map((item, index) => ({
+              src: item.src,
+              label: `${reportLabel} Extracted Image ${index + 1} (Page ${pageNumber})`,
+            })),
+          ];
+        }
+
+        const snapshot = await renderPageFallback(page, 0.6);
+        page.cleanup();
+        return [
+          pageNumber,
+          [
+            {
+              src: snapshot,
+              label: `${reportLabel} Page Snapshot (${pageNumber})`,
+            },
+          ],
+        ];
+      } catch (pageError) {
+        console.warn(`Evidence extraction failed for ${reportLabel} page ${pageNumber}.`, pageError);
+        return null;
+      }
+    }),
+  );
 
   await pdf.destroy();
-  return extractedByPage;
+  return Object.fromEntries(pageEntries.filter(Boolean));
 }
 
 export async function attachEvidenceImages({
@@ -400,18 +451,23 @@ export async function attachEvidenceImages({
     report.areaWiseObservations.flatMap((item) => inferInspectionPages(item, inspectionData)),
   );
 
-  const [thermalEvidence, inspectionEvidence] = await Promise.all([
-    extractEvidenceByPage({
-      file: thermalFile,
-      pageNumbers: thermalPages,
-      reportLabel: "Thermal Report",
-    }),
-    extractEvidenceByPage({
-      file: inspectionFile,
-      pageNumbers: inspectionPages,
-      reportLabel: "Inspection Report",
-    }),
-  ]);
+  const [thermalEvidence, inspectionEvidence] =
+    (await withTimeout(
+      Promise.all([
+        extractEvidenceByPage({
+          file: thermalFile,
+          pageNumbers: thermalPages,
+          reportLabel: "Thermal Report",
+        }),
+        extractEvidenceByPage({
+          file: inspectionFile,
+          pageNumbers: inspectionPages,
+          reportLabel: "Inspection Report",
+        }),
+      ]),
+      TOTAL_EVIDENCE_TIMEOUT_MS,
+      [{}, {}],
+    )) || [{}, {}];
 
   return {
     ...report,
