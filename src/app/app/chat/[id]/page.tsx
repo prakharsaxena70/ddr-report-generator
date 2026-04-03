@@ -3,9 +3,11 @@
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import ChatInterface from "@/components/ChatInterface";
+import PDFImageViewer from "@/components/PDFImageViewer";
 import { getSession, sendMessageStream, uploadFile } from "@/lib/api";
-import { ChatMessage } from "@/lib/types";
-import { Loader2 } from "lucide-react";
+import { ChatMessage, DataPreview, PDFData } from "@/lib/types";
+import { Loader2, FileImage } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 export default function ChatPage() {
   const params = useParams();
@@ -13,7 +15,7 @@ export default function ChatPage() {
   const sessionId = params.id as string;
   
   const [messages, setMessages] = useState<ChatMessage[]>([]);
-  const [currentFile, setCurrentFile] = useState<{ filename: string; preview: DataPreview } | null>(null);
+  const [currentFile, setCurrentFile] = useState<{ filename: string; preview: DataPreview; pdfData?: PDFData } | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isUploading, setIsUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -36,6 +38,7 @@ export default function ChatPage() {
               columns: session.file_meta.columns,
               preview: session.file_meta.preview || [],
             },
+            pdfData: session.file_meta.pdf_data,
           });
         }
       } catch (err) {
@@ -64,6 +67,7 @@ export default function ChatPage() {
       setCurrentFile({
         filename: response.filename,
         preview: response.preview,
+        pdfData: response.pdf_data,
       });
       setMessages([]);
     } catch (err) {
@@ -105,19 +109,54 @@ export default function ChatPage() {
     );
   }
 
+  const hasPdfImages = currentFile?.pdfData && (currentFile.pdfData.images.length > 0 || currentFile.pdfData.pages.length > 0);
+
   return (
     <div className="h-full flex flex-col bg-white">
-      <ChatInterface
-        sessionId={sessionId}
-        messages={messages}
-        onNewMessage={handleNewMessage}
-        onGenerateReport={() => {}}
-        isThinking={false}
-        onFileSelect={handleFileSelect}
-        onRemoveFile={handleRemoveFile}
-        currentFile={currentFile}
-        isUploading={isUploading}
-      />
+      {hasPdfImages ? (
+        <div className="flex h-full">
+          {/* Main Chat Area */}
+          <div className="flex-1 flex flex-col">
+            <ChatInterface
+              sessionId={sessionId}
+              messages={messages}
+              onNewMessage={handleNewMessage}
+              onGenerateReport={() => {}}
+              isThinking={false}
+              onFileSelect={handleFileSelect}
+              onRemoveFile={handleRemoveFile}
+              currentFile={currentFile}
+              isUploading={isUploading}
+            />
+          </div>
+          
+          {/* PDF Images Sidebar */}
+          <div className="w-[400px] border-l border-slate-200 bg-slate-50 overflow-y-auto">
+            <div className="p-4">
+              <h3 className="text-sm font-semibold text-slate-700 mb-3 flex items-center gap-2">
+                <FileImage className="h-4 w-4" />
+                Document Images
+              </h3>
+              <PDFImageViewer 
+                images={currentFile!.pdfData!.images} 
+                pages={currentFile!.pdfData!.pages} 
+              />
+            </div>
+          </div>
+        </div>
+      ) : (
+        <ChatInterface
+          sessionId={sessionId}
+          messages={messages}
+          onNewMessage={handleNewMessage}
+          onGenerateReport={() => {}}
+          isThinking={false}
+          onFileSelect={handleFileSelect}
+          onRemoveFile={handleRemoveFile}
+          currentFile={currentFile}
+          isUploading={isUploading}
+        />
+      )}
     </div>
   );
 }

@@ -10,10 +10,33 @@ export interface DataPreview {
   preview: Record<string, string>[];
 }
 
+export interface PDFImage {
+  page: number;
+  index: number;
+  format: string;
+  base64: string;
+  size: number;
+}
+
+export interface PDFPage {
+  page: number;
+  base64: string;
+  width: number;
+  height: number;
+}
+
+export interface PDFData {
+  images_count: number;
+  images: PDFImage[];
+  pages: PDFPage[];
+  text: string;
+}
+
 export interface UploadResponse {
   session_id: string;
   filename: string;
   preview: DataPreview;
+  pdf_data?: PDFData;
 }
 
 export interface ChatMessage {
@@ -42,6 +65,7 @@ export interface SessionData {
     shape: { rows: number; columns: number };
     columns: ColumnInfo[];
     preview?: Record<string, string>[];
+    pdf_data?: PDFData;
   };
   messages: ChatMessage[];
   created_at?: string | null;
