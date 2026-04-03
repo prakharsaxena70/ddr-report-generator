@@ -197,6 +197,7 @@ export default function App() {
   const [report, setReport] = useState(null);
   const [currentProgress, setCurrentProgress] = useState("");
   const [isGenerating, setIsGenerating] = useState(false);
+  const [isPreparingEvidence, setIsPreparingEvidence] = useState(false);
   const [error, setError] = useState("");
   const [isDownloading, setIsDownloading] = useState(false);
 
@@ -215,7 +216,7 @@ export default function App() {
 
   async function runProgressStep(message, task) {
     setCurrentProgress(message);
-    await new Promise((resolve) => window.setTimeout(resolve, 280));
+    await new Promise((resolve) => window.setTimeout(resolve, 60));
     return task();
   }
 
@@ -229,12 +230,12 @@ export default function App() {
     setError("");
 
     try {
-      const analyzedThermal = await runProgressStep(progressMessages[0], () =>
-        analyzeThermalDocument({ file: thermalFile, propertyDetails }),
-      );
-
-      const analyzedInspection = await runProgressStep(progressMessages[1], () =>
-        analyzeInspectionDocument({ file: inspectionFile, propertyDetails }),
+      setReport(null);
+      const [analyzedThermal, analyzedInspection] = await runProgressStep(progressMessages[0], () =>
+        Promise.all([
+          analyzeThermalDocument({ file: thermalFile, propertyDetails }),
+          analyzeInspectionDocument({ file: inspectionFile, propertyDetails }),
+        ]),
       );
 
       const generatedReport = await runProgressStep(progressMessages[2], () =>
@@ -245,19 +246,33 @@ export default function App() {
         }),
       );
 
-      const reportWithEvidence = await runProgressStep(progressMessages[3], () =>
-        attachEvidenceImages({
-          report: generatedReport,
-          thermalFile,
-          inspectionFile,
-        }),
-      );
-
       startTransition(() => {
         setThermalData(analyzedThermal);
         setInspectionData(analyzedInspection);
-        setReport(reportWithEvidence);
+        setReport(generatedReport);
       });
+
+      setCurrentProgress("");
+      setIsGenerating(false);
+      setIsPreparingEvidence(true);
+
+      attachEvidenceImages({
+        report: generatedReport,
+        thermalFile,
+        inspectionFile,
+      })
+        .then((reportWithEvidence) => {
+          startTransition(() => {
+            setReport(reportWithEvidence);
+          });
+        })
+        .catch((evidenceError) => {
+          console.warn("Evidence extraction completed with fallback behavior.", evidenceError);
+        })
+        .finally(() => {
+          setIsPreparingEvidence(false);
+        });
+      return;
     } catch (generationError) {
       console.error(generationError);
       setError(generationError.message || "Unable to generate the DDR.");
@@ -382,6 +397,11 @@ export default function App() {
                     This area becomes the client-facing DDR. Review the merged findings,
                     missing details, conflicts, and supporting images before exporting.
                   </p>
+                  {isPreparingEvidence ? (
+                    <p className="mt-3 text-sm font-semibold text-amberdeep">
+                      Report is ready. Supporting images are still loading in the background.
+                    </p>
+                  ) : null}
                 </div>
 
                 {report ? (
