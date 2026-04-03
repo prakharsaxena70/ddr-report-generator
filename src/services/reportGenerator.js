@@ -271,53 +271,94 @@ function matchPositiveInputs(area, inspectionData) {
 function buildRecommendedActions(area, rootCause, severity) {
   const actions = [];
 
-  if (/bath|tile|joint|plumb/i.test(rootCause)) {
-    actions.push(
-      "Open failed tile joints, repair weak spots, and seal floor-wall junctions in the wet area.",
-    );
-  }
-  if (/external|facade|crack|wall/i.test(rootCause)) {
-    actions.push(
-      "Repair wall cracks, stop external water entry, and apply suitable waterproof protection.",
-    );
-  }
-  if (/ceiling|slab|terrace/i.test(rootCause)) {
-    actions.push(
-      "Inspect the slab or terrace above, repair the seepage path, and restore damaged ceiling finish.",
-    );
-  }
-  if (/shaft|service|plumb/i.test(rootCause)) {
-    actions.push("Check nearby plumbing lines and service shafts for hidden leakage.");
-  }
-  if (!actions.length) {
-    actions.push(`Carry out a focused repair investigation for the ${area} and stop moisture entry.`);
-  }
-  if (severity === "immediate") {
-    actions.unshift("Treat this area as urgent to prevent further spread of dampness and surface damage.");
+  // Bath / tile / joint / plumbing root cause
+  if (/bath|tile|joint/i.test(rootCause)) {
+    actions.push(`Open failed tile joints and re-grout all gaps in the wet area adjacent to ${area}.`);
+    actions.push("Apply a liquid membrane waterproofing coat on all floor-wall junctions before retiling.");
+    actions.push("Carry out a water-ponding test after repairs to confirm zero seepage before closing the surface.");
   }
 
-  return [...new Set(actions)];
+  // External / facade / crack / wall
+  if (/external|facade|crack/i.test(rootCause)) {
+    actions.push(`Fill all visible cracks on the external wall face adjacent to ${area} using a flexible crack-filler compound.`);
+    actions.push("Apply a breathable waterproof elastomeric coating on the outer wall surface to prevent future rainwater ingress.");
+    actions.push("Inspect the plumbing lines running on the outer wall and reseal any exposed pipe entry points.");
+  }
+
+  // Ceiling / slab / terrace
+  if (/ceiling|slab|terrace/i.test(rootCause)) {
+    actions.push(`Inspect the slab or terrace surface directly above ${area} for cracks, open joints, or waterproofing failure.`);
+    actions.push("Carry out slab waterproofing repair and ensure adequate drainage slope on the terrace to prevent water ponding.");
+    actions.push(`After seepage is stopped at the source, replaster and repaint the ceiling and upper wall of ${area}.`);
+  }
+
+  // Shaft / service / plumbing pipe
+  if (/shaft|service|plumb/i.test(rootCause)) {
+    actions.push(`Inspect the service shaft or plumbing chase adjacent to ${area} for concealed pipe leaks or joint failures.`);
+    actions.push("Isolate and pressure-test the suspected plumbing line to locate the exact leak point before opening walls.");
+    actions.push("After repair, seal the shaft re-entry points with non-shrink grout and apply a damp-proof membrane.");
+  }
+
+  // Generic fallback — still area-specific
+  if (!actions.length) {
+    actions.push(`Carry out a detailed moisture-mapping exercise in ${area} to locate the exact ingress point.`);
+    actions.push(`Remove damaged plaster in ${area}, allow the substrate to dry completely, and apply a damp-proof treatment before replastering.`);
+    actions.push(`Monitor the repaired surface in ${area} for at least two rain cycles before applying final paint finish.`);
+  }
+
+  // Severity-specific prefix (immediate only)
+  if (severity === "immediate") {
+    actions.unshift(`Treat the dampness in ${area} as urgent — delay will cause progressive structural damage and mold spread.`);
+  } else if (severity === "moderate") {
+    actions.push(`Schedule repair work for ${area} within 30 days to prevent the current issue from escalating to an immediate concern.`);
+  }
+
+  // Ensure minimum 3 deduplicated actions
+  const unique = [...new Set(actions)];
+  if (unique.length < 3) {
+    unique.push(`After all repairs, carry out a post-repair inspection of ${area} with a moisture meter to confirm dryness.`);
+  }
+  return unique.slice(0, 6);
 }
 
 function buildSeverityReasoning(impactedArea, thermalEntries, positiveInputs, severity) {
   const reasons = [ensureText(impactedArea.description)];
 
+  // Use actual temperature data and thermal pattern to make this unique per area
   if (thermalEntries.length) {
-    reasons.push(
-      `Thermal evidence shows ${thermalEntries[0].diagnosis.toLowerCase()} at ${thermalEntries[0].location.toLowerCase()}.`,
-    );
+    const entry = thermalEntries[0];
+    const hotspot = entry.hotspot ? `hotspot temperature of ${entry.hotspot}°C` : null;
+    const coldspot = entry.coldspot ? `coldspot of ${entry.coldspot}°C` : null;
+    const tempDetail = [hotspot, coldspot].filter(Boolean).join(" and ");
+    const patternDetail = entry.thermalPattern
+      ? `The thermal image shows ${entry.thermalPattern.toLowerCase()}`
+      : null;
+    const locationDetail = entry.location
+      ? `at ${entry.location.toLowerCase()}`
+      : null;
+
+    if (tempDetail) {
+      reasons.push(`Thermal scan recorded a ${tempDetail} ${locationDetail || ""}`.trim() + ".");
+    }
+    if (patternDetail) {
+      reasons.push(patternDetail + ".");
+    }
   }
 
   if (positiveInputs.length) {
-    reasons.push(`Related source-side evidence points to ${positiveInputs[0].description.toLowerCase()}.`);
+    reasons.push(
+      `Source-side evidence from ${positiveInputs[0].area.toLowerCase()} confirms: ${positiveInputs[0].description.toLowerCase()}.`,
+    );
   }
 
+  // Area-specific closing sentence — incorporates area name so it cannot accidentally match another area
+  const areaRef = ensureText(impactedArea.area, "this zone");
   if (severity === "immediate") {
-    reasons.push("The issue appears active and likely to worsen if it is delayed.");
+    reasons.push(`The active moisture in ${areaRef} is likely to worsen rapidly without intervention — immediate repair is required.`);
   } else if (severity === "moderate") {
-    reasons.push("The issue is established and should be repaired in the near term.");
+    reasons.push(`The current condition of ${areaRef} is progressing and should be addressed within the next 30 days before it becomes severe.`);
   } else {
-    reasons.push("The issue appears limited right now but should still be watched.");
+    reasons.push(`The anomaly in ${areaRef} is currently limited in spread and can be scheduled for repair during the next maintenance cycle.`);
   }
 
   return reasons.join(" ");
@@ -401,9 +442,18 @@ function buildAreaObservation(impactedArea, thermalData, inspectionData) {
   const thermalEntries = matchThermalEntries(impactedArea.area, thermalData);
   const positiveInputs = matchPositiveInputs(impactedArea.area, inspectionData);
   const severity = getHighestSeverity(impactedArea.severity, thermalEntries);
-  const probableRootCause = positiveInputs[0]
-    ? `${positiveInputs[0].area}: ${positiveInputs[0].description}`
-    : NOT_AVAILABLE;
+
+  // Build root cause — avoid repeating the source area name twice if description already
+  // starts with or references the area name.
+  let probableRootCause = NOT_AVAILABLE;
+  if (positiveInputs[0]) {
+    const srcArea = ensureText(positiveInputs[0].area);
+    const srcDesc = ensureText(positiveInputs[0].description);
+    const descStartsWithArea = normalizeKey(srcDesc).startsWith(normalizeKey(srcArea).slice(0, 6));
+    probableRootCause = descStartsWithArea
+      ? srcDesc
+      : `${srcArea}: ${srcDesc}`;
+  }
 
   const missingInfo = [];
   if (!positiveInputs.length) {
@@ -552,14 +602,18 @@ function normalizeObservation(item, fallback) {
     item?.missingOrUnclearInformation,
     fallback.missingOrUnclearInformation,
   );
-  const explicitConflicts = ensureStringList(item?.conflicts, fallback.conflicts);
+  // Strip NO_CONFLICTS placeholder out before merging so it never coexists with real conflicts
+  const explicitConflicts = ensureStringList(item?.conflicts, fallback.conflicts)
+    .filter((c) => c !== NO_CONFLICTS);
   const derivedConflicts = dedupeStrings([
     ...observationText.conflicts,
     ...rootCauseText.conflicts,
     ...severityReasoning.conflicts,
     ...actionList.flatMap((entry) => entry.conflicts),
     ...noteList.flatMap((entry) => entry.conflicts),
-  ]);
+  ]).filter((c) => c !== NO_CONFLICTS);
+
+  const allConflicts = dedupeStrings([...explicitConflicts, ...derivedConflicts]);
 
   return {
     area: ensureText(item?.area, fallback.area),
@@ -572,10 +626,7 @@ function normalizeObservation(item, fallback) {
     recommendedActions: dedupeStrings(actionList.map((entry) => entry.text)),
     additionalNotes: dedupeStrings(noteList.map((entry) => entry.text)),
     missingOrUnclearInformation: missingList,
-    conflicts:
-      dedupeStrings([...explicitConflicts, ...derivedConflicts]).length
-        ? dedupeStrings([...explicitConflicts, ...derivedConflicts])
-        : [NO_CONFLICTS],
+    conflicts: allConflicts.length ? allConflicts : [NO_CONFLICTS],
     evidenceRefs: {
       thermalImageIds: ensureStringList(
         evidenceRefs.thermalImageIds,
