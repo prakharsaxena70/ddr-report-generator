@@ -10,6 +10,8 @@ import {
 } from "../data/sampleData";
 
 const NOT_AVAILABLE = "Not Available";
+const NO_CONFLICTS = "No direct conflict found in the uploaded documents.";
+const NO_MISSING_INFO = "Not Available";
 
 function ensureText(value, fallback = NOT_AVAILABLE) {
   if (typeof value === "string" && value.trim()) {
@@ -26,7 +28,7 @@ function ensureStringList(value, fallback = [NOT_AVAILABLE]) {
         .filter(Boolean)
     : [];
 
-  return [...new Set(list)].length ? [...new Set(list)] : fallback;
+  return dedupeStrings(list).length ? dedupeStrings(list) : fallback;
 }
 
 function ensurePageList(value) {
@@ -35,6 +37,41 @@ function ensurePageList(value) {
 
 function normalizeArray(value, fallback = []) {
   return Array.isArray(value) && value.length ? value : fallback;
+}
+
+function normalizeKey(value) {
+  return ensureText(value, "")
+    .toLowerCase()
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function dedupeStrings(items = []) {
+  const seen = new Set();
+  const deduped = [];
+
+  items.forEach((item) => {
+    const normalized = normalizeKey(item);
+    if (!normalized || seen.has(normalized)) {
+      return;
+    }
+    seen.add(normalized);
+    deduped.push(ensureText(item));
+  });
+
+  return deduped;
+}
+
+function dedupeBy(items = [], getKey) {
+  const seen = new Set();
+  return items.filter((item) => {
+    const key = normalizeKey(getKey(item));
+    if (!key || seen.has(key)) {
+      return false;
+    }
+    seen.add(key);
+    return true;
+  });
 }
 
 function keywordSet(text) {
@@ -79,38 +116,49 @@ function mergeChecklistResponses(responses = {}) {
   };
 }
 
+function dedupeInspectionItems(items = [], kind = "impacted") {
+  return dedupeBy(items, (item) => `${item.area}::${item.description}::${kind === "positive" ? item.risk : item.severity}`);
+}
+
+function dedupeSummaryTable(items = []) {
+  return dedupeBy(items, (item) => `${item.impactedArea}::${item.exposedArea}::${item.link}`);
+}
+
 function normalizeInspectionResponse(result = {}) {
   return {
     ...sampleInspectionAnalysis,
     ...result,
-    impactedAreas: normalizeArray(result.impactedAreas, sampleInspectionAnalysis.impactedAreas).map(
-      (item) => ({
+    impactedAreas: dedupeInspectionItems(
+      normalizeArray(result.impactedAreas, sampleInspectionAnalysis.impactedAreas).map((item) => ({
         area: ensureText(item.area),
         description: ensureText(item.description),
         severity: ensureText(item.severity, "monitor").toLowerCase(),
         observedAt: ensureText(item.observedAt, "Negative side"),
         sourcePages: ensurePageList(item.sourcePages),
-      }),
+      })),
     ),
-    positiveSideInputs: normalizeArray(
-      result.positiveSideInputs,
-      sampleInspectionAnalysis.positiveSideInputs,
-    ).map((item) => ({
-      area: ensureText(item.area),
-      description: ensureText(item.description),
-      risk: ensureText(item.risk, "medium").toLowerCase(),
-      sourcePages: ensurePageList(item.sourcePages),
-    })),
+    positiveSideInputs: dedupeInspectionItems(
+      normalizeArray(
+        result.positiveSideInputs,
+        sampleInspectionAnalysis.positiveSideInputs,
+      ).map((item) => ({
+        area: ensureText(item.area),
+        description: ensureText(item.description),
+        risk: ensureText(item.risk, "medium").toLowerCase(),
+        sourcePages: ensurePageList(item.sourcePages),
+      })),
+      "positive",
+    ),
     checklistResponses: mergeChecklistResponses(result.checklistResponses),
-    summaryTable: normalizeArray(result.summaryTable, sampleInspectionAnalysis.summaryTable).map(
-      (item) => ({
+    summaryTable: dedupeSummaryTable(
+      normalizeArray(result.summaryTable, sampleInspectionAnalysis.summaryTable).map((item) => ({
         impactedArea: ensureText(item.impactedArea),
         exposedArea: ensureText(item.exposedArea),
         link: ensureText(item.link),
-      }),
+      })),
     ),
-    conflicts: ensureStringList(result.conflicts, []),
-    missingInformation: ensureStringList(result.missingInformation, []),
+    conflicts: dedupeStrings(ensureStringList(result.conflicts, [])),
+    missingInformation: dedupeStrings(ensureStringList(result.missingInformation, [])),
     previousAuditOrRepairs: ensureText(
       result.previousAuditOrRepairs,
       sampleInspectionAnalysis.previousAuditOrRepairs,
@@ -236,6 +284,80 @@ function buildSeverityReasoning(impactedArea, thermalEntries, positiveInputs, se
   return reasons.join(" ");
 }
 
+function getSeverityScore(value) {
+  return { immediate: 3, moderate: 2, monitor: 1 }[normalizeThermalSeverity(value)] || 0;
+}
+
+function detectGlobalConflicts(inspectionData, thermalData) {
+  const conflicts = [...(inspectionData.conflicts || [])];
+
+  inspectionData.impactedAreas.forEach((item) => {
+    const matchedThermal = matchThermalEntries(item.area, thermalData);
+    if (!matchedThermal.length) {
+      return;
+    }
+
+    const inspectionScore = getSeverityScore(item.severity);
+    const thermalScore = getSeverityScore(matchedThermal[0].severity);
+
+    if (Math.abs(inspectionScore - thermalScore) >= 2) {
+      conflicts.push(
+        `${item.area}: inspection severity is ${item.severity}, while linked thermal evidence appears ${matchedThermal[0].severity}.`,
+      );
+    }
+  });
+
+  const summaryByArea = new Map();
+  inspectionData.summaryTable.forEach((item) => {
+    const key = normalizeKey(item.impactedArea);
+    const current = summaryByArea.get(key) || new Set();
+    current.add(ensureText(item.exposedArea));
+    summaryByArea.set(key, current);
+  });
+
+  summaryByArea.forEach((exposedAreas, impactedArea) => {
+    if (exposedAreas.size > 1) {
+      conflicts.push(
+        `${impactedArea}: multiple possible source areas are listed (${[...exposedAreas].join(", ")}).`,
+      );
+    }
+  });
+
+  return dedupeStrings(conflicts);
+}
+
+function getAreaConflicts(area, inspectionData, thermalEntries) {
+  const conflicts = [];
+  const areaKey = normalizeKey(area);
+
+  const summaryMatches = inspectionData.summaryTable.filter((item) =>
+    normalizeKey(item.impactedArea).includes(areaKey) || areaKey.includes(normalizeKey(item.impactedArea)),
+  );
+
+  const distinctSources = dedupeStrings(summaryMatches.map((item) => item.exposedArea));
+  if (distinctSources.length > 1) {
+    conflicts.push(`Multiple possible source areas are mentioned: ${distinctSources.join(", ")}.`);
+  }
+
+  if (thermalEntries.length) {
+    const strongest = thermalEntries[0];
+    const matchingInspection = inspectionData.impactedAreas.find(
+      (item) => normalizeKey(item.area) === areaKey,
+    );
+    if (matchingInspection) {
+      const inspectionScore = getSeverityScore(matchingInspection.severity);
+      const thermalScore = getSeverityScore(strongest.severity);
+      if (Math.abs(inspectionScore - thermalScore) >= 2) {
+        conflicts.push(
+          `Inspection notes suggest ${matchingInspection.severity} severity, while thermal evidence suggests ${strongest.severity}.`,
+        );
+      }
+    }
+  }
+
+  return dedupeStrings(conflicts);
+}
+
 function buildAreaObservation(impactedArea, thermalData, inspectionData) {
   const thermalEntries = matchThermalEntries(impactedArea.area, thermalData);
   const positiveInputs = matchPositiveInputs(impactedArea.area, inspectionData);
@@ -266,6 +388,7 @@ function buildAreaObservation(impactedArea, thermalData, inspectionData) {
   if (positiveInputs.length) {
     additionalNotes.push(`Related source area: ${positiveInputs.map((item) => item.area).join(", ")}.`);
   }
+  const conflicts = getAreaConflicts(impactedArea.area, inspectionData, thermalEntries);
 
   return {
     area: impactedArea.area,
@@ -280,9 +403,9 @@ function buildAreaObservation(impactedArea, thermalData, inspectionData) {
       reasoning: buildSeverityReasoning(impactedArea, thermalEntries, positiveInputs, severity),
     },
     recommendedActions: buildRecommendedActions(impactedArea.area, probableRootCause, severity),
-    additionalNotes,
-    missingOrUnclearInformation: missingInfo.length ? missingInfo : [NOT_AVAILABLE],
-    conflicts: [NOT_AVAILABLE],
+    additionalNotes: dedupeStrings(additionalNotes),
+    missingOrUnclearInformation: missingInfo.length ? dedupeStrings(missingInfo) : [NO_MISSING_INFO],
+    conflicts: conflicts.length ? conflicts : [NO_CONFLICTS],
     evidenceRefs: {
       thermalImageIds: thermalEntries.map((entry) => entry.imageId),
       thermalPages: ensurePageList(thermalEntries.map((entry) => entry.sourcePage)),
@@ -332,7 +455,7 @@ function buildFallbackReport({ propertyDetails, thermalData, inspectionData }) {
     ...areaWiseObservations.flatMap((item) => item.missingOrUnclearInformation),
   ].filter((item) => item !== NOT_AVAILABLE);
 
-  const conflicts = inspectionData.conflicts.length ? inspectionData.conflicts : [NOT_AVAILABLE];
+  const conflicts = detectGlobalConflicts(inspectionData, thermalData);
 
   const keyFindings = areaWiseObservations.slice(0, 4).map((item) => {
     const rootCause = item.probableRootCause === NOT_AVAILABLE ? "a source not confirmed" : item.probableRootCause;
@@ -358,10 +481,10 @@ function buildFallbackReport({ propertyDetails, thermalData, inspectionData }) {
     probableRootCause,
     severityAssessment,
     recommendedActions,
-    additionalNotes,
+    additionalNotes: dedupeStrings(additionalNotes),
     missingOrUnclearInformation:
-      missingOrUnclearInformation.length ? [...new Set(missingOrUnclearInformation)] : [NOT_AVAILABLE],
-    conflicts,
+      missingOrUnclearInformation.length ? dedupeStrings(missingOrUnclearInformation) : [NO_MISSING_INFO],
+    conflicts: conflicts.length ? conflicts : [NO_CONFLICTS],
     sourceDocuments: {
       thermalReport: `${thermalData.length} thermal entries analyzed`,
       inspectionReport: `${inspectionData.impactedAreas.length} impacted areas extracted`,
@@ -469,10 +592,11 @@ function mergeGeneratedReport(result, fallbackReport) {
         ),
       };
     }),
-    recommendedActions: normalizeArray(
-      result.recommendedActions,
-      fallbackReport.recommendedActions,
-    ).map((item, index) => ({
+    recommendedActions: dedupeBy(
+      normalizeArray(
+        result.recommendedActions,
+        fallbackReport.recommendedActions,
+      ).map((item, index) => ({
       area: ensureText(item.area, fallbackReport.recommendedActions[index]?.area || NOT_AVAILABLE),
       action: ensureText(item.action, fallbackReport.recommendedActions[index]?.action || NOT_AVAILABLE),
       priority: ensureText(
@@ -484,12 +608,18 @@ function mergeGeneratedReport(result, fallbackReport) {
         fallbackReport.recommendedActions[index]?.reasoning || NOT_AVAILABLE,
       ),
     })),
-    additionalNotes: ensureStringList(result.additionalNotes, fallbackReport.additionalNotes),
+      (item) => `${item.area}::${item.action}`,
+    ),
+    additionalNotes: dedupeStrings(
+      ensureStringList(result.additionalNotes, fallbackReport.additionalNotes),
+    ),
     missingOrUnclearInformation: ensureStringList(
       result.missingOrUnclearInformation,
       fallbackReport.missingOrUnclearInformation,
     ),
-    conflicts: ensureStringList(result.conflicts, fallbackReport.conflicts),
+    conflicts: dedupeStrings(
+      ensureStringList(result.conflicts, fallbackReport.conflicts),
+    ),
   };
 }
 

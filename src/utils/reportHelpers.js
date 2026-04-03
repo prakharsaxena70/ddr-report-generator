@@ -43,7 +43,13 @@ export function deriveDashboardMetrics({ report, thermalData = [], inspectionDat
     missingInfoCount: report?.missingOrUnclearInformation?.filter(
       (item) => item && item !== "Not Available",
     ).length || 0,
-    conflictsCount: report?.conflicts?.filter((item) => item && item !== "Not Available").length || 0,
+    conflictsCount:
+      report?.conflicts?.filter(
+        (item) =>
+          item &&
+          item !== "Not Available" &&
+          item !== "No direct conflict found in the uploaded documents.",
+      ).length || 0,
     severityBreakdown,
   };
 }
