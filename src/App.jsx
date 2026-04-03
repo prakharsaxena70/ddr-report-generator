@@ -260,6 +260,8 @@ export default function App() {
         report: generatedReport,
         thermalFile,
         inspectionFile,
+        thermalData: analyzedThermal,
+        inspectionData: analyzedInspection,
       })
         .then((reportWithEvidence) => {
           startTransition(() => {
@@ -430,7 +432,11 @@ export default function App() {
               <>
                 <Dashboard metrics={dashboardMetrics} />
                 <div>
-                  <ReportPreview report={report} propertyDetails={propertyDetails} />
+                  <ReportPreview
+                    report={report}
+                    propertyDetails={propertyDetails}
+                    isPreparingEvidence={isPreparingEvidence}
+                  />
                 </div>
               </>
             ) : (

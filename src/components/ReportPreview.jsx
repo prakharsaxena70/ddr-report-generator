@@ -69,8 +69,13 @@ function InfoTable({ rows }) {
   );
 }
 
-function ObservationCard({ item }) {
+function ObservationCard({ item, isPreparingEvidence = false }) {
   const evidenceImages = Array.isArray(item.evidenceImages) ? item.evidenceImages : [];
+  const hasPendingEvidence = isPreparingEvidence && (
+    (Array.isArray(item?.evidenceRefs?.thermalPages) && item.evidenceRefs.thermalPages.length) ||
+    (Array.isArray(item?.evidenceRefs?.inspectionPages) && item.evidenceRefs.inspectionPages.length) ||
+    (Array.isArray(item?.evidenceRefs?.thermalImageIds) && item.evidenceRefs.thermalImageIds.length)
+  );
 
   return (
     <div className="rounded-[28px] border border-stone-200 bg-white p-6 shadow-sm">
@@ -181,6 +186,10 @@ function ObservationCard({ item }) {
                 </div>
               </div>
             ))
+          ) : hasPendingEvidence ? (
+            <div className="rounded-[22px] border border-dashed border-amber-300 bg-amber-50 px-4 py-8 text-sm text-amber-700">
+              Preparing supporting images...
+            </div>
           ) : (
             <div className="rounded-[22px] border border-dashed border-stone-300 bg-stone-50 px-4 py-8 text-sm text-stone-500">
               Image Not Available
@@ -224,7 +233,7 @@ function SummaryTable({ title, headers, rows }) {
   );
 }
 
-export default function ReportPreview({ report, propertyDetails }) {
+export default function ReportPreview({ report, propertyDetails, isPreparingEvidence = false }) {
   const observationChunks = chunkArray(report.areaWiseObservations || [], 2);
   const totalPages = 4 + observationChunks.length;
 
@@ -327,7 +336,11 @@ export default function ReportPreview({ report, propertyDetails }) {
           />
           <div className="space-y-6">
             {chunk.map((item) => (
-              <ObservationCard key={item.area} item={item} />
+              <ObservationCard
+                key={item.area}
+                item={item}
+                isPreparingEvidence={isPreparingEvidence}
+              />
             ))}
           </div>
         </PageFrame>

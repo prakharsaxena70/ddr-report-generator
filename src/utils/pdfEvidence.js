@@ -19,10 +19,138 @@ async function fileToUint8Array(file) {
   return new Uint8Array(arrayBuffer);
 }
 
+function ensureText(value, fallback = "") {
+  return typeof value === "string" && value.trim() ? value.trim() : fallback;
+}
+
 function normalizePages(pageNumbers = []) {
   return [...new Set((pageNumbers || []).map(Number).filter((page) => page > 0))].sort(
     (left, right) => left - right,
   );
+}
+
+function normalizeWords(value) {
+  return ensureText(value)
+    .toLowerCase()
+    .replace(/[^a-z0-9\s]/g, " ")
+    .split(/\s+/)
+    .filter((word) => word.length > 2);
+}
+
+function keywordScore(source, target) {
+  const sourceWords = normalizeWords(source);
+  const targetWords = new Set(normalizeWords(target));
+  return sourceWords.reduce(
+    (score, word) => (targetWords.has(word) ? score + 1 : score),
+    0,
+  );
+}
+
+function collectObservationContext(observation = {}) {
+  return [
+    observation.area,
+    observation.observation,
+    observation.probableRootCause,
+    ...(Array.isArray(observation.additionalNotes) ? observation.additionalNotes : []),
+  ]
+    .filter(Boolean)
+    .join(" ");
+}
+
+function inferThermalPages(observation, thermalData = []) {
+  const explicitPages = normalizePages(observation?.evidenceRefs?.thermalPages || []);
+  if (explicitPages.length) {
+    return explicitPages.slice(0, 2);
+  }
+
+  const thermalImageIds = Array.isArray(observation?.evidenceRefs?.thermalImageIds)
+    ? observation.evidenceRefs.thermalImageIds
+    : [];
+
+  const pagesFromImageIds = normalizePages(
+    thermalData
+      .filter((entry) => thermalImageIds.includes(entry.imageId))
+      .map((entry) => entry.sourcePage),
+  );
+  if (pagesFromImageIds.length) {
+    return pagesFromImageIds.slice(0, 2);
+  }
+
+  const context = collectObservationContext(observation);
+  const rankedMatches = thermalData
+    .map((entry) => ({
+      page: Number(entry.sourcePage) || 0,
+      score: Math.max(
+        keywordScore(observation?.area, `${entry.location} ${entry.suggestedArea}`),
+        keywordScore(context, `${entry.location} ${entry.suggestedArea} ${entry.diagnosis} ${entry.thermalPattern}`),
+      ),
+      severity:
+        { immediate: 3, moderate: 2, monitor: 1 }[
+          ensureText(entry.severity, "monitor").toLowerCase()
+        ] || 0,
+    }))
+    .filter((entry) => entry.page > 0 && entry.score > 0)
+    .sort((left, right) => right.score - left.score || right.severity - left.severity);
+
+  const inferredPages = normalizePages(rankedMatches.map((entry) => entry.page));
+  return inferredPages.slice(0, 2);
+}
+
+function inferInspectionPages(observation, inspectionData = {}) {
+  const explicitPages = normalizePages(observation?.evidenceRefs?.inspectionPages || []);
+  if (explicitPages.length) {
+    return explicitPages.slice(0, 2);
+  }
+
+  const context = collectObservationContext(observation);
+  const impactedMatches = (inspectionData.impactedAreas || [])
+    .map((entry) => ({
+      pages: entry.sourcePages || [],
+      score: Math.max(
+        keywordScore(observation?.area, entry.area),
+        keywordScore(context, `${entry.area} ${entry.description}`),
+      ),
+    }))
+    .filter((entry) => entry.score > 0)
+    .sort((left, right) => right.score - left.score);
+
+  const positiveMatches = (inspectionData.positiveSideInputs || [])
+    .map((entry) => ({
+      pages: entry.sourcePages || [],
+      score: Math.max(
+        keywordScore(observation?.probableRootCause, `${entry.area} ${entry.description}`),
+        keywordScore(context, `${entry.area} ${entry.description}`),
+      ),
+    }))
+    .filter((entry) => entry.score > 0)
+    .sort((left, right) => right.score - left.score);
+
+  const summaryMatches = (inspectionData.summaryTable || [])
+    .map((entry) => ({
+      exposedArea: entry.exposedArea,
+      impactedArea: entry.impactedArea,
+      score: Math.max(
+        keywordScore(observation?.area, entry.impactedArea),
+        keywordScore(context, `${entry.impactedArea} ${entry.exposedArea} ${entry.link}`),
+      ),
+    }))
+    .filter((entry) => entry.score > 0)
+    .sort((left, right) => right.score - left.score);
+
+  const summaryPages = summaryMatches.flatMap((entry) => {
+    const positiveMatch = (inspectionData.positiveSideInputs || []).find(
+      (item) =>
+        keywordScore(entry.exposedArea, item.area) > 0 ||
+        keywordScore(entry.exposedArea, item.description) > 0,
+    );
+    return positiveMatch?.sourcePages || [];
+  });
+
+  return normalizePages([
+    ...impactedMatches.flatMap((entry) => entry.pages),
+    ...positiveMatches.flatMap((entry) => entry.pages),
+    ...summaryPages,
+  ]).slice(0, 2);
 }
 
 function createCanvas(width, height) {
@@ -221,42 +349,55 @@ async function extractEvidenceByPage({ file, pageNumbers, reportLabel }) {
       continue;
     }
 
-    const page = await pdf.getPage(pageNumber);
-    const embedded = await extractEmbeddedImagesFromPage(page, pdfjs);
+    try {
+      const page = await pdf.getPage(pageNumber);
+      let embedded = [];
 
-    if (embedded.length) {
-      extractedByPage[pageNumber] = embedded.map((item, index) => ({
-        src: item.src,
-        label: `${reportLabel} Extracted Image ${index + 1} (Page ${pageNumber})`,
-      }));
-      continue;
+      try {
+        embedded = await extractEmbeddedImagesFromPage(page, pdfjs);
+      } catch (embeddedError) {
+        console.warn(`Embedded image extraction failed for ${reportLabel} page ${pageNumber}.`, embeddedError);
+      }
+
+      if (embedded.length) {
+        extractedByPage[pageNumber] = embedded.map((item, index) => ({
+          src: item.src,
+          label: `${reportLabel} Extracted Image ${index + 1} (Page ${pageNumber})`,
+        }));
+        continue;
+      }
+
+      extractedByPage[pageNumber] = [
+        {
+          src: await renderPageFallback(page),
+          label: `${reportLabel} Page Snapshot (${pageNumber})`,
+        },
+      ];
+    } catch (pageError) {
+      console.warn(`Evidence extraction failed for ${reportLabel} page ${pageNumber}.`, pageError);
     }
-
-    extractedByPage[pageNumber] = [
-      {
-        src: await renderPageFallback(page),
-        label: `${reportLabel} Page Snapshot (${pageNumber})`,
-      },
-    ];
   }
 
+  await pdf.destroy();
   return extractedByPage;
 }
 
-export async function attachEvidenceImages({ report, thermalFile, inspectionFile }) {
+export async function attachEvidenceImages({
+  report,
+  thermalFile,
+  inspectionFile,
+  thermalData = [],
+  inspectionData = {},
+}) {
   if (!report?.areaWiseObservations?.length) {
     return report;
   }
 
   const thermalPages = normalizePages(
-    report.areaWiseObservations.flatMap(
-      (item) => item?.evidenceRefs?.thermalPages?.slice(0, 2) || [],
-    ),
+    report.areaWiseObservations.flatMap((item) => inferThermalPages(item, thermalData)),
   );
   const inspectionPages = normalizePages(
-    report.areaWiseObservations.flatMap(
-      (item) => item?.evidenceRefs?.inspectionPages?.slice(0, 2) || [],
-    ),
+    report.areaWiseObservations.flatMap((item) => inferInspectionPages(item, inspectionData)),
   );
 
   const [thermalEvidence, inspectionEvidence] = await Promise.all([
@@ -275,7 +416,7 @@ export async function attachEvidenceImages({ report, thermalFile, inspectionFile
   return {
     ...report,
     areaWiseObservations: report.areaWiseObservations.map((item) => {
-      const thermalRefs = (item?.evidenceRefs?.thermalPages || [])
+      const thermalRefs = inferThermalPages(item, thermalData)
         .slice(0, 2)
         .flatMap((page) =>
           (thermalEvidence[page] || []).map((image, index) => ({
@@ -286,7 +427,7 @@ export async function attachEvidenceImages({ report, thermalFile, inspectionFile
           })),
         );
 
-      const inspectionRefs = (item?.evidenceRefs?.inspectionPages || [])
+      const inspectionRefs = inferInspectionPages(item, inspectionData)
         .slice(0, 2)
         .flatMap((page) =>
           (inspectionEvidence[page] || []).map((image, index) => ({
