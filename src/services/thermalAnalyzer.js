@@ -49,8 +49,16 @@ export async function analyzeThermalDocument({ file, propertyDetails }) {
     );
   } catch (error) {
     console.error("Thermal analysis failed.", error);
-    throw new Error(
-      "Unable to analyze the thermal PDF. Please verify the file and Gemini configuration.",
-    );
+    const errorMessage = error?.message || "Unknown error";
+    if (errorMessage.includes("Missing") || errorMessage.includes("API_KEY")) {
+      throw new Error(`Gemini API key is missing. Please set VITE_GEMINI_API_KEY in your .env file and restart the dev server.`);
+    }
+    if (errorMessage.includes("413") || errorMessage.includes("too large")) {
+      throw new Error("PDF file is too large. Maximum size is 4MB for direct uploads, or set VITE_GEMINI_API_KEY for larger files.");
+    }
+    if (errorMessage.includes("fetch")) {
+      throw new Error("Network error: Unable to reach Gemini API. Check your internet connection.");
+    }
+    throw new Error(`Analysis failed: ${errorMessage}`);
   }
 }
