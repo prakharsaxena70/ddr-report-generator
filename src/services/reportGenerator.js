@@ -9,6 +9,55 @@ import {
   sampleThermalAnalysis,
 } from "../data/sampleData";
 
+const NOT_AVAILABLE = "Not Available";
+
+function ensureText(value, fallback = NOT_AVAILABLE) {
+  if (typeof value === "string" && value.trim()) {
+    return value.trim();
+  }
+
+  return fallback;
+}
+
+function ensureStringList(value, fallback = [NOT_AVAILABLE]) {
+  const list = Array.isArray(value)
+    ? value
+        .map((item) => ensureText(item, ""))
+        .filter(Boolean)
+    : [];
+
+  return [...new Set(list)].length ? [...new Set(list)] : fallback;
+}
+
+function ensurePageList(value) {
+  return [...new Set((Array.isArray(value) ? value : []).map(Number).filter((page) => page > 0))];
+}
+
+function normalizeArray(value, fallback = []) {
+  return Array.isArray(value) && value.length ? value : fallback;
+}
+
+function keywordSet(text) {
+  return ensureText(text, "")
+    .toLowerCase()
+    .replace(/[^a-z0-9\s]/g, " ")
+    .split(/\s+/)
+    .filter((word) => word.length > 2);
+}
+
+function includesAnyKeyword(sourceText, targetText) {
+  const sourceWords = keywordSet(sourceText);
+  const targetWords = keywordSet(targetText);
+  return sourceWords.some((word) => targetWords.includes(word));
+}
+
+function sortBySeverity(items = []) {
+  const rank = { immediate: 0, high: 0, moderate: 1, medium: 1, monitor: 2, low: 2 };
+  return [...items].sort(
+    (left, right) => (rank[left?.severity || left?.risk] ?? 3) - (rank[right?.severity || right?.risk] ?? 3),
+  );
+}
+
 function mergeChecklistResponses(responses = {}) {
   return {
     bathroom: {
@@ -30,203 +79,417 @@ function mergeChecklistResponses(responses = {}) {
   };
 }
 
-function normalizeArray(value, fallback) {
-  return Array.isArray(value) && value.length > 0 ? value : fallback;
-}
-
-function groupSeverity(thermalData) {
-  return thermalData.reduce(
-    (accumulator, entry) => {
-      accumulator[entry.severity] += 1;
-      return accumulator;
-    },
-    { immediate: 0, moderate: 0, monitor: 0 },
-  );
-}
-
-function createExecutiveSummary({ propertyDetails, thermalData, inspectionData }) {
-  const severity = groupSeverity(thermalData);
-  return [
-    `UrbanRoof conducted a non-destructive diagnosis of ${propertyDetails.propertyType.toLowerCase()} premises at ${propertyDetails.propertyAddress}.`,
-    `The inspection cross-referenced ${thermalData.length} thermal references with on-site checklist findings and recorded ${inspectionData.impactedAreas.length} impacted negative-side areas.`,
-    "The dominant leakage contributors are bathroom tile-joint distress in Flat 203, facade cracking with external plumbing wetting, and moisture migration at ceiling/slab interfaces.",
-    `Severity distribution indicates ${severity.immediate} immediate repairs, ${severity.moderate} necessary remedial actions, and ${severity.monitor} monitoring observations.`,
-  ];
-}
-
-function createLeakageSummary(inspectionData) {
-  const checklistResponses = mergeChecklistResponses(inspectionData.checklistResponses);
-
-  return [
-    {
-      area: "Bathroom",
-      finding: checklistResponses.bathroom.notes,
-      likelyCause:
-        "Open tile joints, hollow tiles and possible concealed wet-area transfer through masonry.",
-      urgency: "Immediate",
-    },
-    {
-      area: "Balcony",
-      finding: checklistResponses.balcony.notes,
-      likelyCause:
-        "Failed grout lines and threshold ponding enabling lateral migration below tile bed.",
-      urgency: "Necessary",
-    },
-    {
-      area: "Terrace",
-      finding: checklistResponses.terrace.notes,
-      likelyCause:
-        "Delayed waterproofing deterioration and slab interface seepage.",
-      urgency: "Necessary",
-    },
-    {
-      area: "External Wall",
-      finding: checklistResponses.externalWall.notes,
-      likelyCause:
-        "Facade cracks, algae-bearing wetness and plumbing-related wall saturation.",
-      urgency: "Immediate",
-    },
-  ];
-}
-
-function createTherapies() {
-  return [
-    {
-      action: "Bathroom wet-area rectification",
-      therapy:
-        "Rake open failed joints, execute polymer-modified grouting, replace hollow tiles where required, and seal floor-wall junctions.",
-      priority: "Immediate",
-      linkedAreas: ["Bedroom", "Common Bathroom Ceiling", "Hall"],
-    },
-    {
-      action: "External wall and plumbing treatment",
-      therapy:
-        "Seal cracks with elastomeric repair mortar, rectify exposed plumbing defects, treat algae/fungus, and apply breathable waterproof coating.",
-      priority: "Immediate",
-      linkedAreas: ["Master Bedroom", "Kitchen", "External wall affected rooms"],
-    },
-    {
-      action: "Balcony threshold remediation",
-      therapy:
-        "Restore slope, regrout and waterproof the threshold and tile bed interface to prevent lateral ingress.",
-      priority: "Necessary",
-      linkedAreas: ["Hall", "Balcony-adjacent wall"],
-    },
-    {
-      action: "Ceiling/slab repair",
-      therapy:
-        "Open distressed plaster, dry substrate, carry out RCC/plaster repair where required, and reinstate with waterproof protection.",
-      priority: "Necessary",
-      linkedAreas: ["Common Bathroom Ceiling", "Parking Area"],
-    },
-  ];
-}
-
-function createDelayedActionRisks() {
-  return [
-    "Expansion of damp zones leading to larger plaster delamination and paint failure.",
-    "Acceleration of fungal growth, indoor air-quality deterioration, and occupant discomfort.",
-    "Progressive RCC corrosion risk where repeated saturation affects reinforcement-bearing elements.",
-    "Wider lateral migration into adjacent rooms, joinery, and electrical service interfaces.",
-  ];
-}
-
-function buildFallbackNarrative({ propertyDetails, thermalData, inspectionData }) {
-  const executiveSummary = createExecutiveSummary({
-    propertyDetails,
-    thermalData,
-    inspectionData,
-  });
-  const leakageSummary = createLeakageSummary(inspectionData);
-  const thermalReferences = thermalData.map((entry, index) => ({
-    serial: index + 1,
-    imageId: entry.imageId,
-    location: entry.location,
-    hotspot: entry.hotspot,
-    coldspot: entry.coldspot,
-    emissivity: entry.emissivity,
-    diagnosis: entry.diagnosis,
-    thermalPattern: entry.thermalPattern,
-    severity: entry.severity,
-  }));
-
-  return {
-    meta: {
-      generatedOn: new Date().toLocaleDateString("en-GB"),
-      reportCode: "UR-DDR-2022-0927-AI",
-      version: "1.0",
-    },
-    executiveSummary,
-    introduction: {
-      background:
-        "UrbanRoof conducted a detailed building diagnosis using infrared thermography, moisture interpretation, and inspection checklist correlation to identify probable leakage and dampness contributors.",
-      objective:
-        "To determine the likely source of moisture ingress, classify urgency, and recommend practical therapies aligned with UrbanRoof's diagnosis methodology.",
-      scope:
-        "The assessment covers observable negative-side affected areas, positive-side source zones, thermal references, and cross-correlation with site checklist inputs.",
-      toolsUsed: [
-        "Bosch GTC 400C Thermal Camera (Serial: 02700034772)",
-        "Moisture meter",
-        "Crack gauge",
-        "Tapping hammer",
-      ],
-    },
-    generalInformation: {
-      clientTable: [
-        ["Client / Site", propertyDetails.clientName || "UrbanRoof Demo Client"],
-        ["Property Address", propertyDetails.propertyAddress],
-        ["Property Type", propertyDetails.propertyType],
-        ["Inspection Date", propertyDetails.inspectionDate],
-        ["Inspector Name", propertyDetails.inspectorName],
-        ["Report Reference", "UrbanRoof Detailed Diagnosis Report"],
-      ],
-      siteTable: [
-        ["Floors in Building", propertyDetails.floors],
-        ["Approximate Property Age", `${propertyDetails.propertyAge} years`],
-        ["Previous Audit / Repairs", inspectionData.previousAuditOrRepairs],
-        ["Property Health Score", `${inspectionData.propertyHealthScore}%`],
-        ["Impacted Areas Identified", `${inspectionData.impactedAreas.length}`],
-        ["Thermal References Reviewed", `${thermalData.length}`],
-      ],
-    },
-    leakageSummary,
-    negativeSideInputs: inspectionData.impactedAreas,
-    positiveSideInputs: inspectionData.positiveSideInputs,
-    checklistResponses: inspectionData.checklistResponses,
-    therapies: createTherapies(),
-    delayedActionRisks: createDelayedActionRisks(),
-    summaryTable: inspectionData.summaryTable,
-    thermalReferences,
-    visualReferences: inspectionData.positiveSideInputs.map((item, index) => ({
-      serial: index + 1,
-      area: item.area,
-      description: item.description,
-      risk: item.risk,
-    })),
-    limitations: [
-      "Findings are based on conditions visible and measurable on the date of inspection.",
-      "Thermal images indicate moisture signatures and thermal anomalies; intrusive confirmation was not undertaken.",
-      "Hidden services, inaccessible cavities, and future changes in occupancy or climate may alter observed behavior.",
-    ],
-    legalDisclaimer:
-      "This DDR is an expert opinion generated from available inspection inputs, thermal imagery, and AI-assisted report drafting. Final remedial scope should be validated on site before execution.",
-  };
-}
-
-function normalizeInspectionResponse(result) {
+function normalizeInspectionResponse(result = {}) {
   return {
     ...sampleInspectionAnalysis,
     ...result,
-    impactedAreas: normalizeArray(
-      result.impactedAreas,
-      sampleInspectionAnalysis.impactedAreas,
+    impactedAreas: normalizeArray(result.impactedAreas, sampleInspectionAnalysis.impactedAreas).map(
+      (item) => ({
+        area: ensureText(item.area),
+        description: ensureText(item.description),
+        severity: ensureText(item.severity, "monitor").toLowerCase(),
+        observedAt: ensureText(item.observedAt, "Negative side"),
+        sourcePages: ensurePageList(item.sourcePages),
+      }),
     ),
     positiveSideInputs: normalizeArray(
       result.positiveSideInputs,
       sampleInspectionAnalysis.positiveSideInputs,
-    ),
+    ).map((item) => ({
+      area: ensureText(item.area),
+      description: ensureText(item.description),
+      risk: ensureText(item.risk, "medium").toLowerCase(),
+      sourcePages: ensurePageList(item.sourcePages),
+    })),
     checklistResponses: mergeChecklistResponses(result.checklistResponses),
-    summaryTable: normalizeArray(result.summaryTable, sampleInspectionAnalysis.summaryTable),
+    summaryTable: normalizeArray(result.summaryTable, sampleInspectionAnalysis.summaryTable).map(
+      (item) => ({
+        impactedArea: ensureText(item.impactedArea),
+        exposedArea: ensureText(item.exposedArea),
+        link: ensureText(item.link),
+      }),
+    ),
+    conflicts: ensureStringList(result.conflicts, []),
+    missingInformation: ensureStringList(result.missingInformation, []),
+    previousAuditOrRepairs: ensureText(
+      result.previousAuditOrRepairs,
+      sampleInspectionAnalysis.previousAuditOrRepairs,
+    ),
+    propertyHealthScore:
+      typeof result.propertyHealthScore === "number"
+        ? result.propertyHealthScore
+        : sampleInspectionAnalysis.propertyHealthScore,
+  };
+}
+
+function normalizeThermalSeverity(value) {
+  const normalized = ensureText(value, "monitor").toLowerCase();
+  if (["immediate", "moderate", "monitor"].includes(normalized)) {
+    return normalized;
+  }
+  return "monitor";
+}
+
+function severityLabel(value) {
+  const normalized = ensureText(value, "Not Available");
+  return normalized.charAt(0).toUpperCase() + normalized.slice(1);
+}
+
+function getHighestSeverity(impactedSeverity, thermalEntries) {
+  const scores = { immediate: 3, moderate: 2, monitor: 1 };
+  const impacted = normalizeThermalSeverity(impactedSeverity);
+  const highestThermal = thermalEntries.reduce((best, entry) => {
+    const current = normalizeThermalSeverity(entry.severity);
+    return scores[current] > scores[best] ? current : best;
+  }, impacted);
+
+  return scores[highestThermal] > scores[impacted] ? highestThermal : impacted;
+}
+
+function matchThermalEntries(area, thermalData) {
+  const areaKeywords = keywordSet(area);
+
+  const directMatches = thermalData.filter((entry) => {
+    const source = `${entry.location} ${entry.suggestedArea} ${entry.diagnosis}`;
+    return areaKeywords.some((word) => source.toLowerCase().includes(word));
+  });
+
+  if (directMatches.length) {
+    return sortBySeverity(directMatches).slice(0, 3);
+  }
+
+  return sortBySeverity(thermalData).slice(0, 2);
+}
+
+function matchPositiveInputs(area, inspectionData) {
+  const fromSummary = inspectionData.summaryTable
+    .filter((item) => includesAnyKeyword(item.impactedArea, area))
+    .map((item) => ({
+      area: item.exposedArea,
+      description: item.link,
+      risk: "medium",
+      sourcePages: [],
+    }));
+
+  const directMatches = inspectionData.positiveSideInputs.filter(
+    (item) =>
+      includesAnyKeyword(item.area, area) ||
+      includesAnyKeyword(item.description, area) ||
+      includesAnyKeyword(area, item.description),
+  );
+
+  return sortBySeverity([...directMatches, ...fromSummary]).slice(0, 2);
+}
+
+function buildRecommendedActions(area, rootCause, severity) {
+  const actions = [];
+
+  if (/bath|tile|joint|plumb/i.test(rootCause)) {
+    actions.push(
+      "Open failed tile joints, repair weak spots, and seal floor-wall junctions in the wet area.",
+    );
+  }
+  if (/external|facade|crack|wall/i.test(rootCause)) {
+    actions.push(
+      "Repair wall cracks, stop external water entry, and apply suitable waterproof protection.",
+    );
+  }
+  if (/ceiling|slab|terrace/i.test(rootCause)) {
+    actions.push(
+      "Inspect the slab or terrace above, repair the seepage path, and restore damaged ceiling finish.",
+    );
+  }
+  if (/shaft|service|plumb/i.test(rootCause)) {
+    actions.push("Check nearby plumbing lines and service shafts for hidden leakage.");
+  }
+  if (!actions.length) {
+    actions.push(`Carry out a focused repair investigation for the ${area} and stop moisture entry.`);
+  }
+  if (severity === "immediate") {
+    actions.unshift("Treat this area as urgent to prevent further spread of dampness and surface damage.");
+  }
+
+  return [...new Set(actions)];
+}
+
+function buildSeverityReasoning(impactedArea, thermalEntries, positiveInputs, severity) {
+  const reasons = [ensureText(impactedArea.description)];
+
+  if (thermalEntries.length) {
+    reasons.push(
+      `Thermal evidence shows ${thermalEntries[0].diagnosis.toLowerCase()} at ${thermalEntries[0].location.toLowerCase()}.`,
+    );
+  }
+
+  if (positiveInputs.length) {
+    reasons.push(`Related source-side evidence points to ${positiveInputs[0].description.toLowerCase()}.`);
+  }
+
+  if (severity === "immediate") {
+    reasons.push("The issue appears active and likely to worsen if it is delayed.");
+  } else if (severity === "moderate") {
+    reasons.push("The issue is established and should be repaired in the near term.");
+  } else {
+    reasons.push("The issue appears limited right now but should still be watched.");
+  }
+
+  return reasons.join(" ");
+}
+
+function buildAreaObservation(impactedArea, thermalData, inspectionData) {
+  const thermalEntries = matchThermalEntries(impactedArea.area, thermalData);
+  const positiveInputs = matchPositiveInputs(impactedArea.area, inspectionData);
+  const severity = getHighestSeverity(impactedArea.severity, thermalEntries);
+  const probableRootCause = positiveInputs[0]
+    ? `${positiveInputs[0].area}: ${positiveInputs[0].description}`
+    : NOT_AVAILABLE;
+
+  const missingInfo = [];
+  if (!positiveInputs.length) {
+    missingInfo.push("Exact source-side confirmation is Not Available.");
+  }
+  if (!impactedArea.sourcePages.length) {
+    missingInfo.push("Inspection page reference is Not Available.");
+  }
+  if (!thermalEntries.length) {
+    missingInfo.push("Related thermal image reference is Not Available.");
+  }
+
+  const additionalNotes = [];
+  if (thermalEntries.length) {
+    additionalNotes.push(
+      `Linked thermal evidence: ${thermalEntries.map((entry) => entry.imageId).join(", ")}.`,
+    );
+  } else {
+    additionalNotes.push("Image Not Available.");
+  }
+  if (positiveInputs.length) {
+    additionalNotes.push(`Related source area: ${positiveInputs.map((item) => item.area).join(", ")}.`);
+  }
+
+  return {
+    area: impactedArea.area,
+    observation: `${impactedArea.description} ${
+      thermalEntries[0]
+        ? `Thermal review also shows ${thermalEntries[0].thermalPattern.toLowerCase()}`
+        : ""
+    }`.trim(),
+    probableRootCause,
+    severityAssessment: {
+      level: severity,
+      reasoning: buildSeverityReasoning(impactedArea, thermalEntries, positiveInputs, severity),
+    },
+    recommendedActions: buildRecommendedActions(impactedArea.area, probableRootCause, severity),
+    additionalNotes,
+    missingOrUnclearInformation: missingInfo.length ? missingInfo : [NOT_AVAILABLE],
+    conflicts: [NOT_AVAILABLE],
+    evidenceRefs: {
+      thermalImageIds: thermalEntries.map((entry) => entry.imageId),
+      thermalPages: ensurePageList(thermalEntries.map((entry) => entry.sourcePage)),
+      inspectionPages: ensurePageList([
+        ...(impactedArea.sourcePages || []),
+        ...positiveInputs.flatMap((item) => item.sourcePages || []),
+      ]),
+    },
+    evidenceImages: [],
+  };
+}
+
+function buildFallbackReport({ propertyDetails, thermalData, inspectionData }) {
+  const areaWiseObservations = inspectionData.impactedAreas.map((item) =>
+    buildAreaObservation(item, thermalData, inspectionData),
+  );
+
+  const probableRootCause = areaWiseObservations.map((item) => ({
+    area: item.area,
+    cause: item.probableRootCause,
+    supportingEvidence: item.severityAssessment.reasoning,
+  }));
+
+  const severityAssessment = areaWiseObservations.map((item) => ({
+    area: item.area,
+    severity: item.severityAssessment.level,
+    reasoning: item.severityAssessment.reasoning,
+  }));
+
+  const recommendedActions = areaWiseObservations.flatMap((item) =>
+    item.recommendedActions.map((action) => ({
+      area: item.area,
+      action,
+      priority: severityLabel(item.severityAssessment.level),
+      reasoning: item.probableRootCause,
+    })),
+  );
+
+  const additionalNotes = [
+    `${thermalData.length} thermal references were cross-checked against the inspection checklist.`,
+    `${inspectionData.impactedAreas.length} impacted areas were identified in the uploaded inspection form.`,
+    `Property health score captured from the inspection form: ${inspectionData.propertyHealthScore}%.`,
+  ];
+
+  const missingOrUnclearInformation = [
+    ...inspectionData.missingInformation,
+    ...areaWiseObservations.flatMap((item) => item.missingOrUnclearInformation),
+  ].filter((item) => item !== NOT_AVAILABLE);
+
+  const conflicts = inspectionData.conflicts.length ? inspectionData.conflicts : [NOT_AVAILABLE];
+
+  const keyFindings = areaWiseObservations.slice(0, 4).map((item) => {
+    const rootCause = item.probableRootCause === NOT_AVAILABLE ? "a source not confirmed" : item.probableRootCause;
+    return `${item.area}: ${item.severityAssessment.level} concern linked to ${rootCause}.`;
+  });
+
+  return {
+    meta: {
+      generatedOn: new Date().toLocaleDateString("en-GB"),
+      reportType: "Detailed Diagnostic Report",
+      reportVersion: "2.0",
+    },
+    propertyDetails: {
+      ...samplePropertyDetails,
+      ...propertyDetails,
+    },
+    propertyIssueSummary: {
+      headline: "Property moisture and leakage diagnosis summary",
+      overview: `This report combines the uploaded thermal report and inspection report for ${propertyDetails.propertyAddress}. The system identified ${inspectionData.impactedAreas.length} affected areas and used both source-side and thermal evidence to prepare a client-friendly diagnosis.`,
+      keyFindings,
+    },
+    areaWiseObservations,
+    probableRootCause,
+    severityAssessment,
+    recommendedActions,
+    additionalNotes,
+    missingOrUnclearInformation:
+      missingOrUnclearInformation.length ? [...new Set(missingOrUnclearInformation)] : [NOT_AVAILABLE],
+    conflicts,
+    sourceDocuments: {
+      thermalReport: `${thermalData.length} thermal entries analyzed`,
+      inspectionReport: `${inspectionData.impactedAreas.length} impacted areas extracted`,
+    },
+  };
+}
+
+function normalizeObservation(item, fallback) {
+  const evidenceRefs = item?.evidenceRefs || {};
+
+  return {
+    area: ensureText(item?.area, fallback.area),
+    observation: ensureText(item?.observation, fallback.observation),
+    probableRootCause: ensureText(item?.probableRootCause, fallback.probableRootCause),
+    severityAssessment: {
+      level: ensureText(item?.severityAssessment?.level, fallback.severityAssessment.level),
+      reasoning: ensureText(
+        item?.severityAssessment?.reasoning,
+        fallback.severityAssessment.reasoning,
+      ),
+    },
+    recommendedActions: ensureStringList(
+      item?.recommendedActions,
+      fallback.recommendedActions,
+    ),
+    additionalNotes: ensureStringList(item?.additionalNotes, fallback.additionalNotes),
+    missingOrUnclearInformation: ensureStringList(
+      item?.missingOrUnclearInformation,
+      fallback.missingOrUnclearInformation,
+    ),
+    conflicts: ensureStringList(item?.conflicts, fallback.conflicts),
+    evidenceRefs: {
+      thermalImageIds: ensureStringList(
+        evidenceRefs.thermalImageIds,
+        fallback.evidenceRefs.thermalImageIds,
+      ),
+      thermalPages: ensurePageList(evidenceRefs.thermalPages).length
+        ? ensurePageList(evidenceRefs.thermalPages)
+        : fallback.evidenceRefs.thermalPages,
+      inspectionPages: ensurePageList(evidenceRefs.inspectionPages).length
+        ? ensurePageList(evidenceRefs.inspectionPages)
+        : fallback.evidenceRefs.inspectionPages,
+    },
+    evidenceImages: Array.isArray(item?.evidenceImages) ? item.evidenceImages : fallback.evidenceImages,
+  };
+}
+
+function mergeGeneratedReport(result, fallbackReport) {
+  const resultByArea = new Map(
+    normalizeArray(result.areaWiseObservations, []).map((item) => [
+      ensureText(item.area, "").toLowerCase(),
+      item,
+    ]),
+  );
+  const probableByArea = new Map(
+    normalizeArray(result.probableRootCause, []).map((item) => [
+      ensureText(item.area, "").toLowerCase(),
+      item,
+    ]),
+  );
+  const severityByArea = new Map(
+    normalizeArray(result.severityAssessment, []).map((item) => [
+      ensureText(item.area, "").toLowerCase(),
+      item,
+    ]),
+  );
+  const mergedAreaObservations = fallbackReport.areaWiseObservations.map((fallback) => {
+    const generated = resultByArea.get(fallback.area.toLowerCase()) || {};
+    return normalizeObservation(generated, fallback);
+  });
+
+  return {
+    ...fallbackReport,
+    ...result,
+    propertyIssueSummary: {
+      ...fallbackReport.propertyIssueSummary,
+      ...(result.propertyIssueSummary || {}),
+      headline: ensureText(result.propertyIssueSummary?.headline, fallbackReport.propertyIssueSummary.headline),
+      overview: ensureText(result.propertyIssueSummary?.overview, fallbackReport.propertyIssueSummary.overview),
+      keyFindings: ensureStringList(
+        result.propertyIssueSummary?.keyFindings,
+        fallbackReport.propertyIssueSummary.keyFindings,
+      ),
+    },
+    areaWiseObservations: mergedAreaObservations,
+    probableRootCause: fallbackReport.probableRootCause.map((fallback) => {
+      const item = probableByArea.get(fallback.area.toLowerCase()) || {};
+      return {
+        area: ensureText(item.area, fallback.area),
+        cause: ensureText(item.cause, fallback.cause),
+        supportingEvidence: ensureText(
+          item.supportingEvidence,
+          fallback.supportingEvidence,
+        ),
+      };
+    }),
+    severityAssessment: fallbackReport.severityAssessment.map((fallback) => {
+      const item = severityByArea.get(fallback.area.toLowerCase()) || {};
+      return {
+        area: ensureText(item.area, fallback.area),
+        severity: ensureText(item.severity, fallback.severity),
+        reasoning: ensureText(
+          item.reasoning,
+          fallback.reasoning,
+        ),
+      };
+    }),
+    recommendedActions: normalizeArray(
+      result.recommendedActions,
+      fallbackReport.recommendedActions,
+    ).map((item, index) => ({
+      area: ensureText(item.area, fallbackReport.recommendedActions[index]?.area || NOT_AVAILABLE),
+      action: ensureText(item.action, fallbackReport.recommendedActions[index]?.action || NOT_AVAILABLE),
+      priority: ensureText(
+        item.priority,
+        fallbackReport.recommendedActions[index]?.priority || NOT_AVAILABLE,
+      ),
+      reasoning: ensureText(
+        item.reasoning,
+        fallbackReport.recommendedActions[index]?.reasoning || NOT_AVAILABLE,
+      ),
+    })),
+    additionalNotes: ensureStringList(result.additionalNotes, fallbackReport.additionalNotes),
+    missingOrUnclearInformation: ensureStringList(
+      result.missingOrUnclearInformation,
+      fallbackReport.missingOrUnclearInformation,
+    ),
+    conflicts: ensureStringList(result.conflicts, fallbackReport.conflicts),
   };
 }
 
@@ -259,7 +522,7 @@ export async function generateDiagnosisReport({
   thermalData = sampleThermalAnalysis,
   inspectionData = sampleInspectionAnalysis,
 }) {
-  const fallbackReport = buildFallbackNarrative({
+  const fallbackReport = buildFallbackReport({
     propertyDetails,
     thermalData,
     inspectionData,
@@ -272,105 +535,21 @@ export async function generateDiagnosisReport({
         propertyDetails,
         thermalData,
         inspectionData,
-        desiredSchema: {
-          executiveSummary: ["string"],
-          introduction: {
-            background: "string",
-            objective: "string",
-            scope: "string",
-            toolsUsed: ["string"],
-          },
-          generalInformation: {
-            clientTable: [["label", "value"]],
-            siteTable: [["label", "value"]],
-          },
-          leakageSummary: [
-            { area: "string", finding: "string", likelyCause: "string", urgency: "string" },
-          ],
-          negativeSideInputs: [
-            { area: "string", description: "string", severity: "string", observedAt: "string" },
-          ],
-          positiveSideInputs: [{ area: "string", description: "string", risk: "string" }],
-          checklistResponses: {
-            bathroom: { selected: true, notes: "string" },
-            balcony: { selected: true, notes: "string" },
-            terrace: { selected: true, notes: "string" },
-            externalWall: { selected: true, notes: "string" },
-          },
-          therapies: [
-            { action: "string", therapy: "string", priority: "string", linkedAreas: ["string"] },
-          ],
-          delayedActionRisks: ["string"],
-          summaryTable: [
-            { impactedArea: "string", exposedArea: "string", link: "string" },
-          ],
-          limitations: ["string"],
-          legalDisclaimer: "string",
-        },
+        outputRequirements: [
+          "Property Issue Summary",
+          "Area-wise Observations",
+          "Probable Root Cause",
+          "Severity Assessment with reasoning",
+          "Recommended Actions",
+          "Additional Notes",
+          "Missing or Unclear Information",
+          "Conflicts",
+        ],
       },
-      maxTokens: 5000,
+      temperature: 0.2,
     });
 
-    const mergedChecklistResponses = mergeChecklistResponses(result.checklistResponses);
-    const mergedNegativeSideInputs = normalizeArray(
-      result.negativeSideInputs,
-      fallbackReport.negativeSideInputs,
-    );
-    const mergedPositiveSideInputs = normalizeArray(
-      result.positiveSideInputs,
-      fallbackReport.positiveSideInputs,
-    );
-
-    return {
-      ...fallbackReport,
-      ...result,
-      checklistResponses: mergedChecklistResponses,
-      leakageSummary: normalizeArray(result.leakageSummary, fallbackReport.leakageSummary),
-      negativeSideInputs: mergedNegativeSideInputs,
-      positiveSideInputs: mergedPositiveSideInputs,
-      therapies: normalizeArray(result.therapies, fallbackReport.therapies),
-      delayedActionRisks: normalizeArray(
-        result.delayedActionRisks,
-        fallbackReport.delayedActionRisks,
-      ),
-      summaryTable: normalizeArray(result.summaryTable, fallbackReport.summaryTable),
-      limitations: normalizeArray(result.limitations, fallbackReport.limitations),
-      thermalReferences: fallbackReport.thermalReferences,
-      visualReferences:
-        normalizeArray(
-          result.visualReferences,
-          mergedPositiveSideInputs.map((item, index) => ({
-            serial: index + 1,
-            area: item.area,
-            description: item.description,
-            risk: item.risk,
-          })),
-        ),
-      introduction: {
-        ...fallbackReport.introduction,
-        ...(result.introduction || {}),
-        toolsUsed: normalizeArray(
-          result.introduction?.toolsUsed,
-          fallbackReport.introduction.toolsUsed,
-        ),
-      },
-      generalInformation: {
-        ...fallbackReport.generalInformation,
-        ...(result.generalInformation || {}),
-        clientTable: normalizeArray(
-          result.generalInformation?.clientTable,
-          fallbackReport.generalInformation.clientTable,
-        ),
-        siteTable: normalizeArray(
-          result.generalInformation?.siteTable,
-          fallbackReport.generalInformation.siteTable,
-        ),
-      },
-      executiveSummary: normalizeArray(
-        result.executiveSummary,
-        fallbackReport.executiveSummary,
-      ),
-    };
+    return mergeGeneratedReport(result, fallbackReport);
   } catch (error) {
     console.warn("Using bundled report-generation fallback.", error);
     return fallbackReport;

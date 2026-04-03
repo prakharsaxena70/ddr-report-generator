@@ -6,7 +6,9 @@ emissivity, and most importantly - interpret what the thermal pattern means for 
 Look for: blue/cyan areas indicating moisture/dampness (cooler due to evaporation),
 red/orange hotspots indicating thermal bridges or active leakage points,
 uneven gradients indicating water ingress paths.
-Return JSON array: [{imageId, date, hotspot, coldspot, emissivity, thermalPattern, diagnosis, severity}]
+Also return the likely building area, a short visual description, and the source PDF page number when possible.
+Return JSON array only:
+[{imageId, date, hotspot, coldspot, emissivity, thermalPattern, diagnosis, severity, location, suggestedArea, visualDescription, sourcePage}]
 Severity: 'immediate' | 'moderate' | 'monitor'`;
 
 export const INSPECTION_ANALYSIS_PROMPT = `You are a building inspection expert. Analyze this inspection form and extract:
@@ -14,16 +16,65 @@ export const INSPECTION_ANALYSIS_PROMPT = `You are a building inspection expert.
 2. All exposed/source areas (positive side) with their descriptions
 3. Checklist responses for: WC/Bathroom, Balcony, Terrace, External Wall
 4. Overall property health score
-Return structured JSON matching UrbanRoof DDR format.`;
+5. Source PDF page numbers wherever possible
+6. Any missing information
+7. Any conflicting information
+Return JSON only in this structure:
+{
+  "propertyHealthScore": number,
+  "previousAuditOrRepairs": "string",
+  "impactedAreas": [{"area":"string","description":"string","severity":"immediate|moderate|monitor","observedAt":"string","sourcePages":[1]}],
+  "positiveSideInputs": [{"area":"string","description":"string","risk":"high|medium|low","sourcePages":[1]}],
+  "checklistResponses": {
+    "bathroom":{"selected":true,"notes":"string"},
+    "balcony":{"selected":true,"notes":"string"},
+    "terrace":{"selected":true,"notes":"string"},
+    "externalWall":{"selected":true,"notes":"string"}
+  },
+  "summaryTable": [{"impactedArea":"string","exposedArea":"string","link":"string"}],
+  "missingInformation": ["string"],
+  "conflicts": ["string"]
+}`;
 
 export const REPORT_GENERATION_PROMPT = `You are UrbanRoof's senior building diagnosis expert. Using the thermal analysis data and
-inspection findings provided, generate a complete Detailed Diagnosis Report (DDR).
-Write in professional technical language. For each impacted area, explain:
-- What is observed (dampness, seepage, efflorescence, spalling)
-- Where exactly (skirting level, ceiling, wall corner, etc.)
-- The likely cause (tile joint gaps, concealed plumbing, terrace cracks, external wall cracks)
-- Recommended therapy (grouting treatment, plaster work, RCC treatment, waterproofing)
-Generate all sections matching UrbanRoof's DDR format exactly.`;
+inspection findings provided, generate a client-friendly Detailed Diagnostic Report.
+Rules:
+- Extract and merge facts from both documents logically.
+- Do not invent facts.
+- Avoid duplicate points.
+- If information is missing, write "Not Available".
+- If information conflicts, mention the conflict clearly.
+- Keep the language simple and client-friendly.
+- For every area-wise observation, include evidence references to source pages and thermal image IDs when available.
+Return JSON only in this structure:
+{
+  "propertyIssueSummary": {
+    "headline":"string",
+    "overview":"string",
+    "keyFindings":["string"]
+  },
+  "areaWiseObservations": [{
+    "area":"string",
+    "observation":"string",
+    "probableRootCause":"string",
+    "severityAssessment":{"level":"immediate|moderate|monitor|Not Available","reasoning":"string"},
+    "recommendedActions":["string"],
+    "additionalNotes":["string"],
+    "missingOrUnclearInformation":["string"],
+    "conflicts":["string"],
+    "evidenceRefs":{
+      "thermalImageIds":["string"],
+      "thermalPages":[1],
+      "inspectionPages":[1]
+    }
+  }],
+  "probableRootCause":[{"area":"string","cause":"string","supportingEvidence":"string"}],
+  "severityAssessment":[{"area":"string","severity":"string","reasoning":"string"}],
+  "recommendedActions":[{"area":"string","action":"string","priority":"string","reasoning":"string"}],
+  "additionalNotes":["string"],
+  "missingOrUnclearInformation":["string"],
+  "conflicts":["string"]
+}`;
 
 const DEFAULT_MODEL = "gemini-2.5-flash";
 const LARGE_FILE_BYTES = 4 * 1024 * 1024;

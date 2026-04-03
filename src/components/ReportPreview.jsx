@@ -1,4 +1,4 @@
-import { buildTocEntries, formatLongDate, toTitleCase } from "../utils/reportHelpers";
+import { formatLongDate, toTitleCase } from "../utils/reportHelpers";
 
 function chunkArray(items, chunkSize) {
   const chunks = [];
@@ -17,12 +17,12 @@ function PageFrame({ children, pageNumber, totalPages, showHeader = true }) {
             <div className="flex items-center justify-between gap-4">
               <div>
                 <p className="text-xs uppercase tracking-[0.35em] text-stone-300">
-                  Detailed Diagnosis Report
+                  Detailed Diagnostic Report
                 </p>
                 <h2 className="mt-3 font-display text-3xl text-white">UrbanRoof</h2>
               </div>
               <div className="rounded-full border border-white/10 bg-white/5 px-4 py-2 text-sm">
-                AI-Powered Property Diagnosis
+                AI-Generated DDR
               </div>
             </div>
           </header>
@@ -34,7 +34,9 @@ function PageFrame({ children, pageNumber, totalPages, showHeader = true }) {
 
       <footer className="absolute inset-x-0 bottom-0 flex items-center justify-between border-t border-stone-200 bg-white px-10 py-4 text-xs text-stone-500">
         <span>www.urbanroof.in | UrbanRoof Private Limited</span>
-        <span>Page {pageNumber} of {totalPages}</span>
+        <span>
+          Page {pageNumber} of {totalPages}
+        </span>
       </footer>
     </article>
   );
@@ -52,10 +54,151 @@ function SectionHeading({ index, title }) {
   );
 }
 
-function DataTable({ rows, headers }) {
+function InfoTable({ rows }) {
   return (
     <table className="w-full border-collapse text-left text-sm">
-      {headers ? (
+      <tbody>
+        {rows.map((row, index) => (
+          <tr key={`${row[0]}-${index}`} className={index % 2 === 0 ? "bg-stone-50" : "bg-white"}>
+            <td className="table-cell w-[34%] font-semibold text-charcoal">{row[0]}</td>
+            <td className="table-cell text-stone-700">{row[1]}</td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  );
+}
+
+function ObservationCard({ item }) {
+  const evidenceImages = Array.isArray(item.evidenceImages) ? item.evidenceImages : [];
+
+  return (
+    <div className="rounded-[28px] border border-stone-200 bg-white p-6 shadow-sm">
+      <div className="flex flex-wrap items-start justify-between gap-4">
+        <div>
+          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-amberdeep">
+            Area
+          </p>
+          <h4 className="mt-2 text-2xl font-bold text-charcoal">{item.area}</h4>
+        </div>
+        <div className="rounded-full border border-stone-200 bg-stone-50 px-4 py-2 text-xs font-semibold uppercase tracking-[0.18em] text-charcoal">
+          {toTitleCase(item.severityAssessment.level)}
+        </div>
+      </div>
+
+      <div className="mt-5 grid gap-5 md:grid-cols-2">
+        <div className="rounded-[22px] border border-stone-200 bg-stone-50 p-4">
+          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-stone-500">
+            Observation
+          </p>
+          <p className="mt-2 text-sm leading-7 text-stone-700">{item.observation}</p>
+        </div>
+        <div className="rounded-[22px] border border-stone-200 bg-stone-50 p-4">
+          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-stone-500">
+            Probable Root Cause
+          </p>
+          <p className="mt-2 text-sm leading-7 text-stone-700">{item.probableRootCause}</p>
+        </div>
+      </div>
+
+      <div className="mt-5 rounded-[22px] border border-stone-200 bg-canvas p-4">
+        <p className="text-xs font-semibold uppercase tracking-[0.18em] text-stone-500">
+          Severity Assessment With Reasoning
+        </p>
+        <p className="mt-2 text-sm leading-7 text-stone-700">{item.severityAssessment.reasoning}</p>
+      </div>
+
+      <div className="mt-5 grid gap-5 md:grid-cols-2">
+        <div className="rounded-[22px] border border-stone-200 bg-stone-50 p-4">
+          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-stone-500">
+            Recommended Actions
+          </p>
+          <ul className="mt-2 ml-5 space-y-2 text-sm leading-7 text-stone-700">
+            {item.recommendedActions.map((action) => (
+              <li key={action}>{action}</li>
+            ))}
+          </ul>
+        </div>
+        <div className="rounded-[22px] border border-stone-200 bg-stone-50 p-4">
+          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-stone-500">
+            Additional Notes
+          </p>
+          <ul className="mt-2 ml-5 space-y-2 text-sm leading-7 text-stone-700">
+            {item.additionalNotes.map((note) => (
+              <li key={note}>{note}</li>
+            ))}
+          </ul>
+        </div>
+      </div>
+
+      <div className="mt-5 grid gap-5 md:grid-cols-2">
+        <div className="rounded-[22px] border border-stone-200 bg-rose-50/60 p-4">
+          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-stone-500">
+            Missing Or Unclear Information
+          </p>
+          <ul className="mt-2 ml-5 space-y-2 text-sm leading-7 text-stone-700">
+            {item.missingOrUnclearInformation.map((entry) => (
+              <li key={entry}>{entry}</li>
+            ))}
+          </ul>
+        </div>
+        <div className="rounded-[22px] border border-stone-200 bg-sky-50/60 p-4">
+          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-stone-500">
+            Conflicts
+          </p>
+          <ul className="mt-2 ml-5 space-y-2 text-sm leading-7 text-stone-700">
+            {item.conflicts.map((entry) => (
+              <li key={entry}>{entry}</li>
+            ))}
+          </ul>
+        </div>
+      </div>
+
+      <div className="mt-5">
+        <p className="text-xs font-semibold uppercase tracking-[0.18em] text-stone-500">
+          Supporting Images
+        </p>
+        <div className="mt-3 grid gap-4 md:grid-cols-2">
+          {evidenceImages.length ? (
+            evidenceImages.map((image) => (
+              <div
+                key={`${item.area}-${image.kind}-${image.pageNumber}`}
+                className="overflow-hidden rounded-[22px] border border-stone-200 bg-stone-50"
+              >
+                {image.src ? (
+                  <img
+                    src={image.src}
+                    alt={image.label}
+                    className="h-48 w-full object-cover object-top"
+                  />
+                ) : (
+                  <div className="flex h-48 items-center justify-center bg-stone-100 px-4 text-sm text-stone-500">
+                    Image Not Available
+                  </div>
+                )}
+                <div className="border-t border-stone-200 px-4 py-3 text-xs font-semibold uppercase tracking-[0.18em] text-stone-600">
+                  {image.label}
+                </div>
+              </div>
+            ))
+          ) : (
+            <div className="rounded-[22px] border border-dashed border-stone-300 bg-stone-50 px-4 py-8 text-sm text-stone-500">
+              Image Not Available
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function SummaryTable({ title, headers, rows }) {
+  return (
+    <div>
+      <p className="mb-3 text-sm font-semibold uppercase tracking-[0.2em] text-amberdeep">
+        {title}
+      </p>
+      <table className="w-full border-collapse text-left text-sm">
         <thead>
           <tr className="bg-charcoal text-white">
             {headers.map((header) => (
@@ -65,48 +208,25 @@ function DataTable({ rows, headers }) {
             ))}
           </tr>
         </thead>
-      ) : null}
-      <tbody>
-        {rows.map((row, rowIndex) => (
-          <tr key={`${rowIndex}-${row[0]}`} className={rowIndex % 2 === 0 ? "bg-stone-50" : "bg-white"}>
-            {row.map((cell, cellIndex) => (
-              <td key={`${cellIndex}-${cell}`} className="table-cell">
-                {cell}
-              </td>
-            ))}
-          </tr>
-        ))}
-      </tbody>
-    </table>
-  );
-}
-
-function CheckboxGrid({ checklistResponses }) {
-  const entries = [
-    { label: "WC / Bathroom", value: checklistResponses?.bathroom || {} },
-    { label: "Balcony", value: checklistResponses?.balcony || {} },
-    { label: "Terrace", value: checklistResponses?.terrace || {} },
-    { label: "External Wall", value: checklistResponses?.externalWall || {} },
-  ];
-
-  return (
-    <div className="grid gap-3 md:grid-cols-2">
-      {entries.map((entry) => (
-        <div key={entry.label} className="rounded-2xl border border-stone-200 bg-stone-50 p-4">
-          <p className="font-semibold text-charcoal">
-            {entry.value.selected ? "☒" : "☐"} {entry.label}
-          </p>
-          <p className="mt-2 text-sm leading-6 text-stone-600">{entry.value.notes}</p>
-        </div>
-      ))}
+        <tbody>
+          {rows.map((row, index) => (
+            <tr key={`${title}-${index}`} className={index % 2 === 0 ? "bg-stone-50" : "bg-white"}>
+              {row.map((cell, cellIndex) => (
+                <td key={`${title}-${index}-${cellIndex}`} className="table-cell text-stone-700">
+                  {cell}
+                </td>
+              ))}
+            </tr>
+          ))}
+        </tbody>
+      </table>
     </div>
   );
 }
 
 export default function ReportPreview({ report, propertyDetails }) {
-  const tocEntries = buildTocEntries();
-  const thermalChunks = chunkArray(report.thermalReferences, 10);
-  const totalPages = 7 + thermalChunks.length;
+  const observationChunks = chunkArray(report.areaWiseObservations || [], 2);
+  const totalPages = 4 + observationChunks.length;
 
   return (
     <div id="report-preview" className="report-shell rounded-[36px] border border-white/60 p-4 md:p-6">
@@ -120,12 +240,12 @@ export default function ReportPreview({ report, propertyDetails }) {
             <div className="inline-flex rounded-full border border-white/20 bg-white/5 px-4 py-2 text-xs uppercase tracking-[0.3em] text-stone-300">
               UrbanRoof Private Limited
             </div>
-            <h1 className="mt-10 max-w-xl font-display text-6xl leading-none text-white">
-              AI-Powered Property Diagnosis Report Generator
+            <h1 className="mt-10 max-w-3xl font-display text-6xl leading-none text-white">
+              Detailed Diagnostic Report
             </h1>
             <p className="mt-6 max-w-2xl text-lg leading-8 text-stone-300">
-              Detailed Diagnosis Report prepared using thermography, inspection checklist
-              correlation, and structured building-health analysis.
+              AI-assisted building diagnosis that merges inspection findings and thermal
+              evidence into a clear, client-friendly DDR.
             </p>
           </div>
 
@@ -173,228 +293,110 @@ export default function ReportPreview({ report, propertyDetails }) {
       </PageFrame>
 
       <PageFrame pageNumber={2} totalPages={totalPages}>
-        <SectionHeading index="Data & Information Disclaimer" title="Data Integrity and Use" />
-        <div className="space-y-4 text-sm leading-7 text-stone-700">
-          <p>
-            This report is generated from the property details provided, uploaded PDF
-            documents, and UrbanRoof&apos;s AI-assisted diagnosis workflow. Findings must be
-            read in conjunction with the limitations stated in this report.
-          </p>
-          <p>
-            Thermal signatures are interpreted as non-destructive indicators of moisture,
-            dampness, seepage, or thermal bridging. They guide probable diagnosis but do not
-            replace invasive verification where required.
-          </p>
+        <SectionHeading index="1" title="Property Issue Summary" />
+        <div className="rounded-[28px] border border-stone-200 bg-stone-50 p-6">
+          <p className="text-lg font-semibold text-charcoal">{report.propertyIssueSummary.headline}</p>
+          <p className="mt-4 text-sm leading-7 text-stone-700">{report.propertyIssueSummary.overview}</p>
+          <ul className="mt-5 ml-5 space-y-2 text-sm leading-7 text-stone-700">
+            {report.propertyIssueSummary.keyFindings.map((item) => (
+              <li key={item}>{item}</li>
+            ))}
+          </ul>
         </div>
 
-        <div className="mt-10">
-          <SectionHeading index="Executive Summary" title="Key Diagnosis Summary" />
-          <div className="space-y-4 rounded-[28px] border border-stone-200 bg-stone-50 p-6">
-            {report.executiveSummary.map((item) => (
-              <p key={item} className="text-sm leading-7 text-stone-700">
-                {item}
-              </p>
+        <div className="mt-8">
+          <SectionHeading index="2" title="Property Details" />
+          <InfoTable
+            rows={[
+              ["Property Address", propertyDetails.propertyAddress],
+              ["Inspector", propertyDetails.inspectorName],
+              ["Inspection Date", formatLongDate(propertyDetails.inspectionDate)],
+              ["Property Type", propertyDetails.propertyType],
+              ["Floors", propertyDetails.floors],
+              ["Property Age", `${propertyDetails.propertyAge} years`],
+            ]}
+          />
+        </div>
+      </PageFrame>
+
+      {observationChunks.map((chunk, index) => (
+        <PageFrame key={`observation-page-${index + 1}`} pageNumber={3 + index} totalPages={totalPages}>
+          <SectionHeading
+            index="3"
+            title={`Area-wise Observations${observationChunks.length > 1 ? ` (${index + 1}/${observationChunks.length})` : ""}`}
+          />
+          <div className="space-y-6">
+            {chunk.map((item) => (
+              <ObservationCard key={item.area} item={item} />
             ))}
           </div>
-        </div>
-      </PageFrame>
-
-      <PageFrame pageNumber={3} totalPages={totalPages}>
-        <SectionHeading index="Table of Contents" title="Report Sections" />
-        <ol className="toc-list ml-5 space-y-2 text-sm leading-7 text-stone-700">
-          {tocEntries.map((entry) => (
-            <li key={entry}>{entry}</li>
-          ))}
-        </ol>
-
-        <div className="mt-8">
-          <SectionHeading index="1" title="Introduction" />
-          <div className="grid gap-5">
-            <div className="rounded-[24px] border border-stone-200 bg-stone-50 p-5">
-              <p className="font-semibold text-charcoal">Background</p>
-              <p className="mt-2 text-sm leading-6 text-stone-700">
-                {report.introduction.background}
-              </p>
-            </div>
-            <div className="rounded-[24px] border border-stone-200 bg-white p-5">
-              <p className="font-semibold text-charcoal">Objective</p>
-              <p className="mt-2 text-sm leading-6 text-stone-700">
-                {report.introduction.objective}
-              </p>
-            </div>
-            <div className="rounded-[24px] border border-stone-200 bg-canvas p-5">
-              <p className="font-semibold text-charcoal">Scope & Tools Used</p>
-              <p className="mt-2 text-sm leading-6 text-stone-700">{report.introduction.scope}</p>
-              <div className="mt-4 flex flex-wrap gap-2">
-                {report.introduction.toolsUsed.map((tool) => (
-                  <span key={tool} className="check-chip">
-                    {tool}
-                  </span>
-                ))}
-              </div>
-            </div>
-          </div>
-        </div>
-      </PageFrame>
-
-      <PageFrame pageNumber={4} totalPages={totalPages}>
-        <SectionHeading index="2" title="General Information" />
-        <DataTable rows={report.generalInformation.clientTable} />
-        <div className="mt-6">
-          <DataTable rows={report.generalInformation.siteTable} />
-        </div>
-
-        <div className="mt-8">
-          <SectionHeading index="3.1" title="Sources of Leakage Summary" />
-          <DataTable
-            headers={["Area", "Observed Finding", "Likely Cause", "Urgency"]}
-            rows={report.leakageSummary.map((item) => [
-              item.area,
-              item.finding,
-              item.likelyCause,
-              item.urgency,
-            ])}
-          />
-        </div>
-      </PageFrame>
-
-      <PageFrame pageNumber={5} totalPages={totalPages}>
-        <SectionHeading index="3.2 - 3.9" title="Visual Observations and Checklist Inputs" />
-        <CheckboxGrid checklistResponses={report.checklistResponses} />
-
-        <div className="mt-8 grid gap-6">
-          <div>
-            <p className="mb-3 text-sm font-semibold uppercase tracking-[0.2em] text-amberdeep">
-              Negative Side Inputs
-            </p>
-            <DataTable
-              headers={["Impacted Area", "Description", "Severity"]}
-              rows={report.negativeSideInputs.map((item) => [
-                item.area,
-                item.description,
-                toTitleCase(item.severity),
-              ])}
-            />
-          </div>
-          <div>
-            <p className="mb-3 text-sm font-semibold uppercase tracking-[0.2em] text-amberdeep">
-              Positive Side Inputs
-            </p>
-            <DataTable
-              headers={["Source Area", "Description", "Risk"]}
-              rows={report.positiveSideInputs.map((item) => [
-                item.area,
-                item.description,
-                toTitleCase(item.risk),
-              ])}
-            />
-          </div>
-        </div>
-      </PageFrame>
-
-      <PageFrame pageNumber={6} totalPages={totalPages}>
-        <SectionHeading index="4.1 - 4.5" title="Analysis & Suggestions" />
-        <div className="space-y-6">
-          <div>
-            <p className="mb-3 text-sm font-semibold uppercase tracking-[0.2em] text-amberdeep">
-              Actions Required & Suggested Therapies
-            </p>
-            <DataTable
-              headers={["Action", "Suggested Therapy", "Priority", "Linked Areas"]}
-              rows={report.therapies.map((item) => [
-                item.action,
-                item.therapy,
-                item.priority,
-                item.linkedAreas.join(", "),
-              ])}
-            />
-          </div>
-
-          <div>
-            <p className="mb-3 text-sm font-semibold uppercase tracking-[0.2em] text-amberdeep">
-              Further Possibilities due to Delayed Action
-            </p>
-            <div className="rounded-[24px] border border-stone-200 bg-stone-50 p-5">
-              <ul className="ml-5 space-y-2 text-sm leading-7 text-stone-700">
-                {report.delayedActionRisks.map((item) => (
-                  <li key={item}>{item}</li>
-                ))}
-              </ul>
-            </div>
-          </div>
-
-          <div>
-            <p className="mb-3 text-sm font-semibold uppercase tracking-[0.2em] text-amberdeep">
-              Summary Table
-            </p>
-            <DataTable
-              headers={["Impacted Area", "Exposed Area", "Correlation"]}
-              rows={report.summaryTable.map((item) => [
-                item.impactedArea,
-                item.exposedArea,
-                item.link,
-              ])}
-            />
-          </div>
-        </div>
-      </PageFrame>
-
-      {thermalChunks.map((chunk, index) => (
-        <PageFrame key={chunk[0].imageId} pageNumber={7 + index} totalPages={totalPages}>
-          <SectionHeading
-            index="4.4"
-            title={`Thermal References for Negative Side Inputs${thermalChunks.length > 1 ? ` (${index + 1}/${thermalChunks.length})` : ""}`}
-          />
-          <DataTable
-            headers={[
-              "Image ID",
-              "Location",
-              "Hotspot",
-              "Coldspot",
-              "Emissivity",
-              "Diagnosis / Pattern",
-              "Severity",
-            ]}
-            rows={chunk.map((item) => [
-              item.imageId,
-              item.location,
-              `${item.hotspot}°C`,
-              `${item.coldspot}°C`,
-              `${item.emissivity}`,
-              `${item.diagnosis} ${item.thermalPattern}`,
-              toTitleCase(item.severity),
-            ])}
-          />
         </PageFrame>
       ))}
 
-      <PageFrame pageNumber={totalPages} totalPages={totalPages}>
-        <SectionHeading index="4.5" title="Visual References for Positive Side Inputs" />
-        <DataTable
-          headers={["Source Area", "Description", "Risk"]}
-          rows={report.visualReferences.map((item) => [
-            item.area,
-            item.description,
-            toTitleCase(item.risk),
-          ])}
+      <PageFrame pageNumber={totalPages - 1} totalPages={totalPages}>
+        <SectionHeading index="4" title="Probable Root Cause" />
+        <SummaryTable
+          title="Root Cause Summary"
+          headers={["Area", "Probable Root Cause", "Supporting Evidence"]}
+          rows={report.probableRootCause.map((item) => [item.area, item.cause, item.supportingEvidence])}
         />
 
         <div className="mt-8">
-          <SectionHeading index="5" title="Limitation and Precaution Note" />
-          <div className="rounded-[24px] border border-stone-200 bg-stone-50 p-5">
+          <SummaryTable
+            title="Severity Assessment"
+            headers={["Area", "Severity", "Reasoning"]}
+            rows={report.severityAssessment.map((item) => [
+              item.area,
+              toTitleCase(item.severity),
+              item.reasoning,
+            ])}
+          />
+        </div>
+
+        <div className="mt-8">
+          <SummaryTable
+            title="Recommended Actions"
+            headers={["Area", "Action", "Priority", "Reasoning"]}
+            rows={report.recommendedActions.map((item) => [
+              item.area,
+              item.action,
+              item.priority,
+              item.reasoning,
+            ])}
+          />
+        </div>
+      </PageFrame>
+
+      <PageFrame pageNumber={totalPages} totalPages={totalPages}>
+        <SectionHeading index="5" title="Additional Notes" />
+        <div className="rounded-[24px] border border-stone-200 bg-stone-50 p-5">
+          <ul className="ml-5 space-y-2 text-sm leading-7 text-stone-700">
+            {report.additionalNotes.map((item) => (
+              <li key={item}>{item}</li>
+            ))}
+          </ul>
+        </div>
+
+        <div className="mt-8">
+          <SectionHeading index="6" title="Missing or Unclear Information" />
+          <div className="rounded-[24px] border border-stone-200 bg-rose-50/60 p-5">
             <ul className="ml-5 space-y-2 text-sm leading-7 text-stone-700">
-              {report.limitations.map((item) => (
+              {report.missingOrUnclearInformation.map((item) => (
                 <li key={item}>{item}</li>
               ))}
             </ul>
           </div>
         </div>
 
-        <div className="mt-8 rounded-[24px] border border-charcoal bg-charcoal px-6 py-5 text-white">
-          <p className="text-xs font-semibold uppercase tracking-[0.28em] text-amberdeep">
-            Legal Disclaimer
-          </p>
-          <p className="mt-3 text-sm leading-7 text-stone-200">{report.legalDisclaimer}</p>
+        <div className="mt-8">
+          <SectionHeading index="7" title="Conflicting Details" />
+          <div className="rounded-[24px] border border-stone-200 bg-sky-50/60 p-5">
+            <ul className="ml-5 space-y-2 text-sm leading-7 text-stone-700">
+              {report.conflicts.map((item) => (
+                <li key={item}>{item}</li>
+              ))}
+            </ul>
+          </div>
         </div>
       </PageFrame>
     </div>

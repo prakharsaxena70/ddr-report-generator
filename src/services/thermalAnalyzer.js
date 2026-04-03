@@ -13,6 +13,10 @@ function normalizeThermalEntry(entry) {
     diagnosis: entry.diagnosis || "Diagnosis pending.",
     severity: entry.severity || "monitor",
     location: entry.location || "Inspection area not tagged",
+    sourcePage: Number(entry.sourcePage ?? entry.page ?? 0) || null,
+    suggestedArea: entry.suggestedArea || entry.area || "General Area",
+    visualDescription:
+      entry.visualDescription || "Image-level thermal evidence summary was not available.",
   };
 }
 
@@ -37,7 +41,12 @@ export async function analyzeThermalDocument({ file, propertyDetails }) {
       throw new Error("Unexpected thermal response shape.");
     }
 
-    return result.map(normalizeThermalEntry);
+    return result.map((entry, index) =>
+      normalizeThermalEntry({
+        ...entry,
+        sourcePage: entry.sourcePage ?? entry.page ?? index + 1,
+      }),
+    );
   } catch (error) {
     console.error("Thermal analysis failed.", error);
     throw new Error(

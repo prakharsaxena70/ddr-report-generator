@@ -13,6 +13,7 @@ import {
 import { hasGeminiProxy } from "./services/geminiApi";
 import { analyzeInspectionDocument, generateDiagnosisReport } from "./services/reportGenerator";
 import { analyzeThermalDocument } from "./services/thermalAnalyzer";
+import { attachEvidenceImages } from "./utils/pdfEvidence";
 import { exportReportPdf } from "./utils/pdfExport";
 import { deriveDashboardMetrics } from "./utils/reportHelpers";
 
@@ -76,7 +77,7 @@ function StatusCard({ hasLiveGemini }) {
         AI Status
       </p>
       <h3 className="mt-2 font-display text-2xl text-charcoal">Analysis Mode</h3>
-      <div className="mt-4 rounded-[24px] border border-stone-200 bg-stone-50 p-4">
+        <div className="mt-4 rounded-[24px] border border-stone-200 bg-stone-50 p-4">
         <div className="flex items-center justify-between gap-3">
           <p className="text-sm font-semibold text-charcoal">Gemini 2.5 Flash</p>
           <span className="rounded-full border border-stone-200 bg-white px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-stone-600">
@@ -85,8 +86,8 @@ function StatusCard({ hasLiveGemini }) {
         </div>
         <p className="mt-3 text-sm leading-6 text-stone-600">
           {hasLiveGemini
-            ? "Uploaded PDFs will be processed through the server-side Gemini proxy before the DDR is generated."
-            : "Configure the Gemini API route before using live AI analysis. Both uploaded PDFs are required for report generation."}
+            ? "Uploaded PDFs will be analyzed and merged into one structured DDR with evidence-backed observations."
+            : "Configure Gemini before using live AI analysis. Both uploaded PDFs are required for report generation."}
         </p>
       </div>
     </div>
@@ -111,8 +112,8 @@ function GenerationPanel({
             Generate AI Diagnosis Report
           </h2>
           <p className="mt-2 max-w-xl text-sm leading-6 text-stone-600">
-            The system analyzes thermal imagery, extracts checklist findings, correlates
-            likely leakage causes, and assembles the final DDR structure automatically.
+            The system reads both PDFs, merges the evidence, removes duplicate points,
+            handles missing or conflicting details, and prepares a clear DDR automatically.
           </p>
         </div>
 
@@ -199,7 +200,7 @@ export default function App() {
   const [error, setError] = useState("");
   const [isDownloading, setIsDownloading] = useState(false);
 
-  const dashboardMetrics = deriveDashboardMetrics({ thermalData, inspectionData });
+  const dashboardMetrics = deriveDashboardMetrics({ report, thermalData, inspectionData });
   const hasLiveGemini = hasGeminiProxy();
   const progressIndex = progressMessages.indexOf(currentProgress);
   const canGenerate = Boolean(thermalFile && inspectionFile);
@@ -244,12 +245,18 @@ export default function App() {
         }),
       );
 
-      await runProgressStep(progressMessages[3], async () => {
-        startTransition(() => {
-          setThermalData(analyzedThermal);
-          setInspectionData(analyzedInspection);
-          setReport(generatedReport);
-        });
+      const reportWithEvidence = await runProgressStep(progressMessages[3], () =>
+        attachEvidenceImages({
+          report: generatedReport,
+          thermalFile,
+          inspectionFile,
+        }),
+      );
+
+      startTransition(() => {
+        setThermalData(analyzedThermal);
+        setInspectionData(analyzedInspection);
+        setReport(reportWithEvidence);
       });
     } catch (generationError) {
       console.error(generationError);
@@ -295,20 +302,20 @@ export default function App() {
                   UrbanRoof | Mumbai & Pune
                 </div>
                 <h1 className="mt-6 font-display text-4xl leading-tight md:text-6xl">
-                  Property diagnostics that feel like a guided workflow, not a form dump.
+                  AI-powered DDR generation built around evidence, logic, and client clarity.
                 </h1>
                 <p className="mt-5 max-w-2xl text-base leading-8 text-stone-300">
-                  Upload documents, let Gemini interpret the evidence, review the structured
-                  findings, and export a polished UrbanRoof diagnosis report with much less
-                  manual effort.
+                  Upload the thermal report and inspection report, let the system connect
+                  both documents, and export a structured diagnosis that is easier for a
+                  client to understand and easier for a reviewer to trust.
                 </p>
               </div>
             </div>
 
             <div className="grid gap-4 md:grid-cols-3 xl:grid-cols-1">
-              <HeroMetric label="Delivery" value="Full DDR + PDF" />
+              <HeroMetric label="Delivery" value="DDR + image evidence" />
               <HeroMetric label="Inputs" value="2 PDFs + site details" />
-              <HeroMetric label="Model" value="Gemini 2.5 Flash" />
+              <HeroMetric label="Focus" value="Accuracy over fluff" />
             </div>
           </div>
         </section>
@@ -372,8 +379,8 @@ export default function App() {
                     Preview the generated diagnosis
                   </h2>
                   <p className="mt-2 max-w-2xl text-sm leading-6 text-stone-600">
-                    This area becomes the client-facing output. Review the generated DDR,
-                    validate the findings, then export the PDF.
+                    This area becomes the client-facing DDR. Review the merged findings,
+                    missing details, conflicts, and supporting images before exporting.
                   </p>
                 </div>
 
@@ -410,10 +417,10 @@ export default function App() {
                       Your DDR preview will appear here after generation.
                     </h3>
                     <p className="mt-4 max-w-2xl text-sm leading-7 text-stone-600">
-                      The generated report will include the executive summary, leakage-source
-                      analysis, negative and positive side tables, suggested therapies, thermal
-                      references, limitations, and the legal disclaimer in an export-ready
-                      format.
+                      The generated report will include a property issue summary, area-wise
+                      observations, probable root causes, severity reasoning, recommended
+                      actions, additional notes, missing information, conflicts, and image
+                      evidence in an export-ready format.
                     </p>
                   </div>
 
@@ -423,10 +430,10 @@ export default function App() {
                     </p>
                     <div className="mt-4 space-y-3">
                       {[
-                        "Executive summary and leakage source overview",
-                        "Negative-side and positive-side observation tables",
-                        "Thermal reference tables with diagnosis notes",
-                        "Suggested therapies and delayed-action risks",
+                        "Property issue summary and area-wise observations",
+                        "Root cause analysis with severity reasoning",
+                        "Recommended actions with supporting images",
+                        "Explicit missing information and conflict notes",
                       ].map((item) => (
                         <div
                           key={item}

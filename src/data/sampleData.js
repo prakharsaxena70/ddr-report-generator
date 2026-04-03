@@ -122,6 +122,34 @@ const locations = [
   "Kitchen side wall",
 ];
 
+function suggestedAreaFromLocation(location) {
+  const value = location.toLowerCase();
+
+  if (value.includes("bathroom")) {
+    return "Bathroom";
+  }
+  if (value.includes("hall")) {
+    return "Hall";
+  }
+  if (value.includes("bedroom")) {
+    return "Bedroom";
+  }
+  if (value.includes("kitchen")) {
+    return "Kitchen";
+  }
+  if (value.includes("parking")) {
+    return "Parking Area";
+  }
+  if (value.includes("balcony")) {
+    return "Balcony";
+  }
+  if (value.includes("external")) {
+    return "External Wall";
+  }
+
+  return "General Area";
+}
+
 export const sampleThermalAnalysis = imageIds.map((imageId, index) => ({
   imageId,
   date: "27/09/2022",
@@ -133,6 +161,9 @@ export const sampleThermalAnalysis = imageIds.map((imageId, index) => ({
   diagnosis: diagnoses[index],
   severity: severities[index],
   location: locations[index],
+  sourcePage: index + 1,
+  suggestedArea: suggestedAreaFromLocation(locations[index]),
+  visualDescription: `Thermal image ${imageId} highlights ${thermalPatterns[index].toLowerCase()}`,
 }));
 
 export const sampleInspectionAnalysis = {
@@ -146,9 +177,10 @@ export const sampleInspectionAnalysis = {
     {
       area: "Hall",
       description:
-        "Dampness visible at lower wall/skirting with paint blistering and mild fungal spotting.",
+        "Dampness visible at lower wall and skirting with paint blistering and mild fungal spotting.",
       severity: "moderate",
       observedAt: "Negative side",
+      sourcePages: [2],
     },
     {
       area: "Bedroom",
@@ -156,6 +188,7 @@ export const sampleInspectionAnalysis = {
         "Mold growth and moisture staining along wall finish adjacent to bathroom zone.",
       severity: "immediate",
       observedAt: "Negative side",
+      sourcePages: [2, 3],
     },
     {
       area: "Master Bedroom",
@@ -163,20 +196,22 @@ export const sampleInspectionAnalysis = {
         "Cold-wall dampness with surface discoloration and recurring seepage marks.",
       severity: "moderate",
       observedAt: "Negative side",
+      sourcePages: [3],
     },
     {
       area: "Kitchen",
-      description:
-        "Moisture traces near shaft wall and lower plaster softening.",
+      description: "Moisture traces near shaft wall and lower plaster softening.",
       severity: "moderate",
       observedAt: "Negative side",
+      sourcePages: [3, 4],
     },
     {
       area: "Master Bedroom Wall",
       description:
-        "Localized damp patch near corner/ceiling junction suggesting migration from upper wet area.",
+        "Localized damp patch near corner and ceiling junction suggesting migration from upper wet area.",
       severity: "moderate",
       observedAt: "Negative side",
+      sourcePages: [4],
     },
     {
       area: "Parking Area",
@@ -184,6 +219,7 @@ export const sampleInspectionAnalysis = {
         "Thermal cold patches and dampness at beam-column interface below wet area stack.",
       severity: "immediate",
       observedAt: "Negative side",
+      sourcePages: [4],
     },
     {
       area: "Common Bathroom Ceiling",
@@ -191,32 +227,37 @@ export const sampleInspectionAnalysis = {
         "Water ingress band and flaking finish at ceiling level, likely from tile joints above.",
       severity: "immediate",
       observedAt: "Negative side",
+      sourcePages: [5],
     },
   ],
   positiveSideInputs: [
     {
       area: "Flat 203 Bathroom",
       description:
-        "Open tile joints, hollow-sounding tiles and likely seepage through floor/wall interfaces.",
+        "Open tile joints, hollow-sounding tiles and likely seepage through floor and wall interfaces.",
       risk: "high",
+      sourcePages: [1, 5],
     },
     {
       area: "Balcony",
       description:
         "Grout deterioration and threshold ponding path allowing migration under tile bed.",
       risk: "medium",
+      sourcePages: [5],
     },
     {
       area: "Terrace/Upper Wet Area",
       description:
         "Potential slab and waterproofing defects contributing to ceiling level ingress.",
       risk: "medium",
+      sourcePages: [5],
     },
     {
       area: "External Wall",
       description:
-        "Moderate facade cracks, algae/fungus staining and plumbing-related wetting on outer face.",
+        "Moderate facade cracks, algae or fungus staining and plumbing-related wetting on outer face.",
       risk: "high",
+      sourcePages: [6],
     },
   ],
   checklistResponses: {
@@ -234,7 +275,7 @@ export const sampleInspectionAnalysis = {
     },
     externalWall: {
       selected: true,
-      notes: "Moderate cracks, algae/fungus and external plumbing issues noted.",
+      notes: "Moderate cracks, algae or fungus and external plumbing issues noted.",
     },
   },
   summaryTable: [
@@ -259,6 +300,10 @@ export const sampleInspectionAnalysis = {
       link: "Rainwater penetration and outer wall wetting contributing to dampness.",
     },
   ],
+  conflicts: [],
+  missingInformation: [
+    "Exact repair history before the inspection is not available in the uploaded inspection form.",
+  ],
 };
 
 export const samplePropertyDetails = {
@@ -276,5 +321,5 @@ export const progressMessages = [
   "Analyzing thermal images...",
   "Cross-referencing inspection data...",
   "Generating diagnosis...",
-  "Compiling PDF report...",
+  "Compiling report evidence...",
 ];

@@ -15,40 +15,35 @@ export function formatLongDate(dateValue) {
   });
 }
 
-export function toTitleCase(value) {
-  return value
+export function toTitleCase(value = "") {
+  return String(value)
     .replace(/_/g, " ")
     .replace(/\b\w/g, (character) => character.toUpperCase());
 }
 
-export function deriveDashboardMetrics({ thermalData = [], inspectionData }) {
-  const severityBreakdown = thermalData.reduce(
+export function deriveDashboardMetrics({ report, thermalData = [], inspectionData }) {
+  const severityBreakdown = (report?.severityAssessment || []).reduce(
     (accumulator, entry) => {
-      accumulator[entry.severity] += 1;
+      const key = String(entry.severity || "").toLowerCase();
+      if (accumulator[key] !== undefined) {
+        accumulator[key] += 1;
+      }
       return accumulator;
     },
     { immediate: 0, moderate: 0, monitor: 0 },
   );
 
   return {
-    impactedAreas: inspectionData?.impactedAreas?.length || 0,
+    impactedAreas:
+      report?.areaWiseObservations?.length || inspectionData?.impactedAreas?.length || 0,
     anomaliesDetected: thermalData.filter(
       (entry) => entry.severity === "immediate" || entry.severity === "moderate",
     ).length,
     healthScore: inspectionData?.propertyHealthScore || 0,
+    missingInfoCount: report?.missingOrUnclearInformation?.filter(
+      (item) => item && item !== "Not Available",
+    ).length || 0,
+    conflictsCount: report?.conflicts?.filter((item) => item && item !== "Not Available").length || 0,
     severityBreakdown,
   };
-}
-
-export function buildTocEntries() {
-  return [
-    "Executive Summary",
-    "Data & Information Disclaimer",
-    "1. Introduction",
-    "2. General Information",
-    "3. Visual Observation and Readings",
-    "4. Analysis & Suggestions",
-    "5. Limitation and Precaution Note",
-    "Legal Disclaimer",
-  ];
 }

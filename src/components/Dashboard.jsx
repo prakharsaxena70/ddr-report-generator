@@ -3,19 +3,24 @@ import { toTitleCase } from "../utils/reportHelpers";
 export default function Dashboard({ metrics }) {
   const cards = [
     {
-      label: "Impacted Areas",
+      label: "Area-wise Findings",
       value: metrics.impactedAreas,
       tone: "from-white to-stone-50",
     },
     {
-      label: "Thermal Anomalies",
+      label: "Thermal Flags",
       value: metrics.anomaliesDetected,
       tone: "from-amber-50 to-orange-50",
     },
     {
-      label: "Health Score",
-      value: `${metrics.healthScore}%`,
-      tone: "from-lime-50 to-white",
+      label: "Missing Info",
+      value: metrics.missingInfoCount,
+      tone: "from-rose-50 to-white",
+    },
+    {
+      label: "Conflicts",
+      value: metrics.conflictsCount,
+      tone: "from-sky-50 to-white",
     },
   ];
 
@@ -27,16 +32,17 @@ export default function Dashboard({ metrics }) {
             Step 7
           </p>
           <h3 className="mt-2 font-display text-2xl text-charcoal">Diagnosis Dashboard</h3>
-          <p className="mt-2 max-w-xl text-sm leading-6 text-stone-600">
-            Review severity, scope, and property health before you export the finished DDR.
+          <p className="mt-2 max-w-2xl text-sm leading-6 text-stone-600">
+            This summary highlights what the AI found, what still needs human review,
+            and how urgent the main issues appear to be.
           </p>
         </div>
         <div className="rounded-2xl border border-stone-200 bg-canvas px-4 py-3 text-xs font-semibold uppercase tracking-[0.18em] text-charcoal">
-          Severity snapshot
+          Recruiter-friendly snapshot
         </div>
       </div>
 
-      <div className="mt-6 grid gap-4 md:grid-cols-3">
+      <div className="mt-6 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
         {cards.map((card) => (
           <div
             key={card.label}
