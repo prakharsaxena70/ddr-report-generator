@@ -30,9 +30,7 @@ export default function DDRUpload({ onReportGenerated }: DDRUploadProps) {
         formData.append("thermal_report", thermalFile);
       }
 
-      const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
-      
-      const response = await fetch(`${API_URL}/ddr/generate`, {
+      const response = await fetch("/api/ddr/generate", {
         method: "POST",
         body: formData,
       });
