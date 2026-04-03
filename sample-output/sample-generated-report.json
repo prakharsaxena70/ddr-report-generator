@@ -8,7 +8,7 @@
     "propertyAge": "8",
     "clientName": "UrbanRoof Demo Client"
   },
-  "inspection": {
+  "inspectionAnalysis": {
     "propertyHealthScore": 85.71,
     "propertyType": "Flat",
     "floors": 11,
@@ -21,67 +21,103 @@
     "impactedAreas": [
       {
         "area": "Hall",
-        "description": "Dampness visible at lower wall/skirting with paint blistering and mild fungal spotting.",
+        "description": "Dampness visible at lower wall and skirting with paint blistering and mild fungal spotting.",
         "severity": "moderate",
-        "observedAt": "Negative side"
+        "observedAt": "Negative side",
+        "sourcePages": [
+          2
+        ]
       },
       {
         "area": "Bedroom",
         "description": "Mold growth and moisture staining along wall finish adjacent to bathroom zone.",
         "severity": "immediate",
-        "observedAt": "Negative side"
+        "observedAt": "Negative side",
+        "sourcePages": [
+          2,
+          3
+        ]
       },
       {
         "area": "Master Bedroom",
         "description": "Cold-wall dampness with surface discoloration and recurring seepage marks.",
         "severity": "moderate",
-        "observedAt": "Negative side"
+        "observedAt": "Negative side",
+        "sourcePages": [
+          3
+        ]
       },
       {
         "area": "Kitchen",
         "description": "Moisture traces near shaft wall and lower plaster softening.",
         "severity": "moderate",
-        "observedAt": "Negative side"
+        "observedAt": "Negative side",
+        "sourcePages": [
+          3,
+          4
+        ]
       },
       {
         "area": "Master Bedroom Wall",
-        "description": "Localized damp patch near corner/ceiling junction suggesting migration from upper wet area.",
+        "description": "Localized damp patch near corner and ceiling junction suggesting migration from upper wet area.",
         "severity": "moderate",
-        "observedAt": "Negative side"
+        "observedAt": "Negative side",
+        "sourcePages": [
+          4
+        ]
       },
       {
         "area": "Parking Area",
         "description": "Thermal cold patches and dampness at beam-column interface below wet area stack.",
         "severity": "immediate",
-        "observedAt": "Negative side"
+        "observedAt": "Negative side",
+        "sourcePages": [
+          4
+        ]
       },
       {
         "area": "Common Bathroom Ceiling",
         "description": "Water ingress band and flaking finish at ceiling level, likely from tile joints above.",
         "severity": "immediate",
-        "observedAt": "Negative side"
+        "observedAt": "Negative side",
+        "sourcePages": [
+          5
+        ]
       }
     ],
     "positiveSideInputs": [
       {
         "area": "Flat 203 Bathroom",
-        "description": "Open tile joints, hollow-sounding tiles and likely seepage through floor/wall interfaces.",
-        "risk": "high"
+        "description": "Open tile joints, hollow-sounding tiles and likely seepage through floor and wall interfaces.",
+        "risk": "high",
+        "sourcePages": [
+          1,
+          5
+        ]
       },
       {
         "area": "Balcony",
         "description": "Grout deterioration and threshold ponding path allowing migration under tile bed.",
-        "risk": "medium"
+        "risk": "medium",
+        "sourcePages": [
+          5
+        ]
       },
       {
         "area": "Terrace/Upper Wet Area",
         "description": "Potential slab and waterproofing defects contributing to ceiling level ingress.",
-        "risk": "medium"
+        "risk": "medium",
+        "sourcePages": [
+          5
+        ]
       },
       {
         "area": "External Wall",
-        "description": "Moderate facade cracks, algae/fungus staining and plumbing-related wetting on outer face.",
-        "risk": "high"
+        "description": "Moderate facade cracks, algae or fungus staining and plumbing-related wetting on outer face.",
+        "risk": "high",
+        "sourcePages": [
+          6
+        ]
       }
     ],
     "checklistResponses": {
@@ -99,7 +135,7 @@
       },
       "externalWall": {
         "selected": true,
-        "notes": "Moderate cracks, algae/fungus and external plumbing issues noted."
+        "notes": "Moderate cracks, algae or fungus and external plumbing issues noted."
       }
     },
     "summaryTable": [
@@ -123,6 +159,10 @@
         "exposedArea": "Facade cracks and plumbing line",
         "link": "Rainwater penetration and outer wall wetting contributing to dampness."
       }
+    ],
+    "conflicts": [],
+    "missingInformation": [
+      "Exact repair history before the inspection is not available in the uploaded inspection form."
     ]
   },
   "thermalSample": [
@@ -136,7 +176,10 @@
       "thermalPattern": "Minor thermal drift near skirting with no strong moisture signature.",
       "diagnosis": "Monitor wall base for progression.",
       "severity": "monitor",
-      "location": "Hall skirting wall"
+      "location": "Hall skirting wall",
+      "sourcePage": 1,
+      "suggestedArea": "Hall",
+      "visualDescription": "Thermal image RB02377X highlights minor thermal drift near skirting with no strong moisture signature."
     },
     {
       "imageId": "RB02378X",
@@ -148,7 +191,10 @@
       "thermalPattern": "Cold edge variation suggests residual dampness migrating from adjacent wall corner.",
       "diagnosis": "Moderate dampness tied to adjacent wet-area loading.",
       "severity": "moderate",
-      "location": "Hall wall corner"
+      "location": "Hall wall corner",
+      "sourcePage": 2,
+      "suggestedArea": "Hall",
+      "visualDescription": "Thermal image RB02378X highlights cold edge variation suggests residual dampness migrating from adjacent wall corner."
     },
     {
       "imageId": "RB02379X",
@@ -160,7 +206,10 @@
       "thermalPattern": "Strong hotspot over mold-affected plaster with visible dampness, indicating active leakage path.",
       "diagnosis": "Immediate intervention required at wet wall and mold-affected zone.",
       "severity": "immediate",
-      "location": "Bedroom damp wall"
+      "location": "Bedroom damp wall",
+      "sourcePage": 3,
+      "suggestedArea": "Bedroom",
+      "visualDescription": "Thermal image RB02379X highlights strong hotspot over mold-affected plaster with visible dampness, indicating active leakage path."
     },
     {
       "imageId": "RB02380X",
@@ -172,7 +221,10 @@
       "thermalPattern": "Patchy cool zone along ceiling line suggests early seepage through slab joint.",
       "diagnosis": "Moderate seepage from slab joint or wet room above.",
       "severity": "moderate",
-      "location": "Common bathroom ceiling"
+      "location": "Common bathroom ceiling",
+      "sourcePage": 4,
+      "suggestedArea": "Bathroom",
+      "visualDescription": "Thermal image RB02380X highlights patchy cool zone along ceiling line suggests early seepage through slab joint."
     },
     {
       "imageId": "RB02381X",
@@ -184,7 +236,10 @@
       "thermalPattern": "Uneven wall cooling with evaporation trace indicates trapped moisture behind plaster.",
       "diagnosis": "Damp substrate behind plaster; investigate bathroom adjacency.",
       "severity": "moderate",
-      "location": "Master bedroom wall"
+      "location": "Master bedroom wall",
+      "sourcePage": 5,
+      "suggestedArea": "Bedroom",
+      "visualDescription": "Thermal image RB02381X highlights uneven wall cooling with evaporation trace indicates trapped moisture behind plaster."
     },
     {
       "imageId": "RB02382X",
@@ -196,7 +251,10 @@
       "thermalPattern": "Mild thermal bridge near plumbing chase; monitor for concealed line loss.",
       "diagnosis": "Possible concealed plumbing issue; correlate with inspection inputs.",
       "severity": "moderate",
-      "location": "Bathroom plumbing chase"
+      "location": "Bathroom plumbing chase",
+      "sourcePage": 6,
+      "suggestedArea": "Bathroom",
+      "visualDescription": "Thermal image RB02382X highlights mild thermal bridge near plumbing chase; monitor for concealed line loss."
     },
     {
       "imageId": "RB02383X",
@@ -208,7 +266,10 @@
       "thermalPattern": "Warm-to-cool gradient around balcony wall suggests water tracking across grout lines.",
       "diagnosis": "Balcony grout failure allowing lateral moisture movement.",
       "severity": "moderate",
-      "location": "Balcony inside face"
+      "location": "Balcony inside face",
+      "sourcePage": 7,
+      "suggestedArea": "Balcony",
+      "visualDescription": "Thermal image RB02383X highlights warm-to-cool gradient around balcony wall suggests water tracking across grout lines."
     },
     {
       "imageId": "RB02384X",
@@ -220,7 +281,10 @@
       "thermalPattern": "Stable wall surface with isolated cooler point near window jamb.",
       "diagnosis": "Low severity anomaly with no confirmed active source.",
       "severity": "monitor",
-      "location": "Window jamb"
+      "location": "Window jamb",
+      "sourcePage": 8,
+      "suggestedArea": "General Area",
+      "visualDescription": "Thermal image RB02384X highlights stable wall surface with isolated cooler point near window jamb."
     },
     {
       "imageId": "RB02385X",
@@ -232,7 +296,10 @@
       "thermalPattern": "Distinct blue patch consistent with active moisture accumulation behind finish.",
       "diagnosis": "Active seepage at negative side wall finish.",
       "severity": "immediate",
-      "location": "Parking area column face"
+      "location": "Parking area column face",
+      "sourcePage": 9,
+      "suggestedArea": "Parking Area",
+      "visualDescription": "Thermal image RB02385X highlights distinct blue patch consistent with active moisture accumulation behind finish."
     },
     {
       "imageId": "RB02386X",
@@ -244,7 +311,11 @@
       "thermalPattern": "Distinct blue patch with cold center confirming active moisture spread.",
       "diagnosis": "Active moisture ingress with elevated deterioration risk.",
       "severity": "immediate",
-      "location": "Parking area beam junction"
+      "location": "Parking area beam junction",
+      "sourcePage": 10,
+      "suggestedArea": "Parking Area",
+      "visualDescription": "Thermal image RB02386X highlights distinct blue patch with cold center confirming active moisture spread."
     }
-  ]
+  ],
+  "note": "This sample artifact is a lightweight static export and is not the same as the live in-app PDF export."
 }

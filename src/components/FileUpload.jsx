@@ -53,8 +53,8 @@ export default function FileUpload({
             {file ? file.name : "Choose a PDF to continue"}
           </p>
           <p className="mt-2 max-w-md text-sm leading-6 text-stone-600">
-            PDF document input will be sent to Gemini through your configured proxy and used
-            in the final UrbanRoof diagnosis workflow.
+            PDF input is analyzed for structured observations and linked evidence so the
+            final DDR can combine text findings with relevant document images.
           </p>
 
           <div className="mt-4 flex flex-wrap items-center justify-center gap-2">

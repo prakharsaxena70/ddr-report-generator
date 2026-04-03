@@ -1,41 +1,105 @@
-# UrbanRoof AI-Powered Property Diagnosis Report Generator
+# UrbanRoof AI DDR Generator
 
-A production-ready React application for UrbanRoof that turns thermal-inspection PDFs and building checklist inputs into a branded Detailed Diagnosis Report (DDR).
+A React + Vite application for UrbanRoof that reads an inspection report PDF and a thermal report PDF, merges the findings with AI, and produces a client-friendly Main DDR (Detailed Diagnostic Report).
 
-## What it does
+## Assignment Fit
 
-- Accepts property metadata, a thermal-images PDF, and an inspection/checklist PDF
-- Sends PDFs to Google Gemini 2.5 Flash through a server-side proxy endpoint
-- Uses UrbanRoof-specific prompts for:
-  - thermal analysis
-  - inspection form extraction
-  - full DDR generation
-- Cross-correlates thermal anomalies with inspection findings
-- Renders a structured DDR preview in UrbanRoof styling
-- Exports the preview to PDF using `jsPDF`
-- Includes bundled sample-output assets as reference files, while live report generation requires both uploaded PDFs
+This project is aligned to the UrbanRoof AI Generalist assignment requirements:
 
-## Tech stack
+- reads both source documents
+- extracts relevant observations
+- merges thermal + inspection findings logically
+- avoids duplicate-style repetition through normalized report assembly
+- handles missing details with `Not Available`
+- surfaces conflicting details explicitly
+- places relevant source-document evidence images under area-wise observations
+- exports the final DDR as a downloadable PDF
+
+## Current DDR Output Structure
+
+The generated report now contains:
+
+1. `Property Issue Summary`
+2. `Area-wise Observations`
+3. `Probable Root Cause`
+4. `Severity Assessment (with reasoning)`
+5. `Recommended Actions`
+6. `Additional Notes`
+7. `Missing or Unclear Information`
+8. `Conflicting Details`
+
+## What The App Does
+
+- accepts property details
+- requires upload of:
+  - thermal report PDF
+  - inspection/checklist report PDF
+- analyzes both PDFs with Gemini 2.5 Flash
+- normalizes extracted data into a structured report schema
+- cross-links observations with evidence references
+- renders a reviewable DDR preview
+- exports the same DDR to PDF with branded formatting
+
+## Tech Stack
 
 - React + Vite
 - Tailwind CSS
-- Google Gemini 2.5 Flash via Vercel serverless proxy
-- jsPDF for PDF export
+- Google Gemini 2.5 Flash
+- jsPDF for export
+- `pdfjs-dist` for client-side source PDF evidence rendering
 
-## Repo structure
+## Important Implementation Notes
+
+### AI logic
+
+The AI prompt layer lives in:
+
+- [src/services/geminiApi.js](/C:/Users/ASUS/OneDrive/Desktop/DDR%20GENERATOR/src/services/geminiApi.js)
+
+The report assembly and safety logic lives in:
+
+- [src/services/reportGenerator.js](/C:/Users/ASUS/OneDrive/Desktop/DDR%20GENERATOR/src/services/reportGenerator.js)
+
+The thermal normalization logic lives in:
+
+- [src/services/thermalAnalyzer.js](/C:/Users/ASUS/OneDrive/Desktop/DDR%20GENERATOR/src/services/thermalAnalyzer.js)
+
+### Evidence images
+
+Relevant source-document evidence is attached per area in:
+
+- [src/utils/pdfEvidence.js](/C:/Users/ASUS/OneDrive/Desktop/DDR%20GENERATOR/src/utils/pdfEvidence.js)
+
+Current behavior:
+
+- the app first attempts direct image extraction from the source PDF pages tied to each observation
+- if an embedded image cannot be extracted cleanly, it falls back to a page snapshot from the same source page
+- if evidence cannot be produced, it shows `Image Not Available`
+
+Note:
+
+- this is designed to support similar inspection reports, not only the provided sample files
+- evidence selection is heuristic and based on matched source page references from extracted observations
+
+## Repo Structure
 
 ```text
 /urbanroof-ai-diagnosis
 ├── README.md
 ├── api/
-│   └── gemini.js
-├── single-artifact/
-│   └── UrbanRoofDiagnosisArtifact.jsx
+│   ├── gemini.js
+│   ├── gemini-file.js
+│   └── gemini-upload.js
 ├── sample-output/
 │   ├── sample-generated-report.pdf
 │   └── sample-generated-report.json
 ├── scripts/
 │   └── generateSampleReport.mjs
+├── server/
+│   ├── geminiService.js
+│   └── viteGeminiPlugin.js
+├── single-artifact/
+│   └── UrbanRoofDiagnosisArtifact.jsx
 ├── src/
 │   ├── App.jsx
 │   ├── components/
@@ -52,109 +116,53 @@ A production-ready React application for UrbanRoof that turns thermal-inspection
 │   │   └── thermalAnalyzer.js
 │   └── utils/
 │       ├── json.js
+│       ├── pdfEvidence.js
 │       ├── pdfExport.js
 │       └── reportHelpers.js
 ├── index.html
 ├── package.json
-├── postcss.config.js
-├── tailwind.config.js
 └── vite.config.js
 ```
 
-## Local setup
-
-1. Install dependencies:
+## Local Setup
 
 ```bash
 npm install
-```
-
-2. Configure environment variables in `.env.local` if you want local live Gemini analysis:
-
-```bash
-VITE_GEMINI_PROXY_URL=http://localhost:3000/api/gemini
-VITE_GEMINI_MODEL=gemini-2.5-flash
-VITE_GEMINI_API_KEY=your_public_browser_key_here
-GEMINI_API_KEY=your_server_side_key_here
-```
-
-For Vercel production, set `VITE_GEMINI_API_KEY` so the browser can call Gemini directly for PDF analysis. This avoids Vercel request-size limits and Gemini resumable-upload CORS restrictions. Keep `GEMINI_API_KEY` as the server-side fallback secret for non-browser paths. `VITE_GEMINI_PROXY_URL` is optional in production.
-
-3. Start the app:
-
-```bash
 npm run dev
 ```
 
-4. Build for deployment:
+Optional environment variables:
+
+```bash
+VITE_GEMINI_MODEL=gemini-2.5-flash
+VITE_GEMINI_API_KEY=your_browser_key
+GEMINI_API_KEY=your_server_key
+```
+
+## Build
 
 ```bash
 npm run build
 ```
 
-## Gemini request shape
-
-The app sends uploaded PDFs to Gemini using inline PDF data and targets `gemini-2.5-flash`. This follows Google's official Gemini documentation for document understanding and text generation:
-
-- [Gemini API overview](https://ai.google.dev/gemini-api/docs)
-- [Gemini document processing](https://ai.google.dev/gemini-api/docs/document-processing)
-- [Gemini text generation](https://ai.google.dev/gemini-api/docs/text-generation)
-- [Gemini files API reference](https://ai.google.dev/api/files)
-
-## UrbanRoof prompt logic
-
-The exact assignment prompts are implemented in [src/services/geminiApi.js](/C:/Users/ASUS/OneDrive/Desktop/DDR%20GENERATOR/src/services/geminiApi.js):
-
-- `THERMAL_ANALYSIS_PROMPT`
-- `INSPECTION_ANALYSIS_PROMPT`
-- `REPORT_GENERATION_PROMPT`
-
-## Sample case behavior
-
-The repository includes bundled sample data and reference outputs based on the assignment:
-
-- 30 thermal image IDs from `RB02377X` to `RB02406X`
-- date `27/09/2022`
-- emissivity `0.94`
-- reflected temperature `23°C`
-- inspection score `85.71%`
-- 7 impacted areas
-- bathroom tile joint hollowness in Flat 203 as the primary source
-- external wall cracking, algae/fungus, and plumbing issues as secondary contributors
-
-The live app now requires both uploaded PDFs before the AI diagnosis report can be generated.
-
-## PDF output
-
-The browser-exported PDF includes:
-
-- branded cover page
-- disclaimer
-- table of contents
-- introduction
-- general information tables
-- leakage summary
-- negative-side and positive-side tables
-- therapies and delayed-action risks
-- thermal reference tables
-- limitations and legal disclaimer
-
-## Generate sample output files
-
-To regenerate the included sample-output assets:
+## Generate Sample Output
 
 ```bash
 npm run generate:sample
 ```
 
-This creates:
+This writes:
 
 - `sample-output/sample-generated-report.pdf`
 - `sample-output/sample-generated-report.json`
 
-## Deployment notes
+## Honest Limitations
 
-- Vercel is the cleanest target because the repo already includes `api/gemini.js`
-- Keep `GEMINI_API_KEY` only in Vercel environment variables, not in frontend code
-- Set `GEMINI_MODEL=gemini-2.5-flash` on Vercel if you want to override the default
-- If you want richer PDF fidelity later, you can swap the browser export path for a Puppeteer-based server render without changing the report schema
+- evidence relevance is still guided by page-level matching and extracted references, so image placement is helpful but not perfect in every possible report layout
+- final factual quality still depends on source PDF quality and Gemini extraction quality
+- a human reviewer should still validate the final report before client delivery
+- the sample-output generator is a lightweight artifact generator, not the same path as the live in-app export
+
+## Deployment
+
+The project is deployable on Vercel. The live app uses the same frontend workflow and PDF export flow present in the repo.

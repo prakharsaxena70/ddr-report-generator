@@ -9,13 +9,13 @@ endobj
 << /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>
 endobj
 4 0 obj
-<< /Length 743 >>
+<< /Length 1118 >>
 stream
 BT
 /F1 11 Tf
 50 790 Td
 14 TL
-(URBANROOF DETAILED DIAGNOSIS REPORT) Tj
+(URBANROOF MAIN DDR) Tj
 T*
 () Tj
 T*
@@ -25,23 +25,29 @@ T*
 T*
 (Inspection Date: 2022-09-27) Tj
 T*
-(Property Type: Flat | Floors: 11 | Age: 8 years) Tj
-T*
 () Tj
 T*
-(EXECUTIVE SUMMARY) Tj
+(1. PROPERTY ISSUE SUMMARY) Tj
 T*
-(UrbanRoof cross-correlated 30 thermal references with inspection checklist findings and) Tj
+(This sample DDR combines the inspection report and thermal report for flat premises at) Tj
 T*
-(identified 7 impacted negative-side areas. Primary contributors include bathroom) Tj
+(Flat 202, UrbanRoof Sample Site, Baner Road, Pune, Maharashtra 411045.) Tj
 T*
-(tile-joint distress in Flat 203, facade cracking with plumbing-related wetting, and) Tj
+(- Hall: MODERATE concern linked to Flat 203 Bathroom: Open tile joints, hollow-sounding) Tj
 T*
-(moisture migration at slab and ceiling interfaces.) Tj
+(tiles and likely seepage through floor and wall interfaces..) Tj
 T*
-() Tj
+(- Bedroom: IMMEDIATE concern linked to Flat 203 Bathroom: Open tile joints,) Tj
 T*
-(Severity breakdown: Immediate 6, Necessary 16, Monitor 8.) Tj
+(hollow-sounding tiles and likely seepage through floor and wall interfaces..) Tj
+T*
+(- Master Bedroom: MODERATE concern linked to Flat 203 Bathroom: Open tile joints,) Tj
+T*
+(hollow-sounding tiles and likely seepage through floor and wall interfaces..) Tj
+T*
+(- Kitchen: MODERATE concern linked to Flat 203 Bathroom: Open tile joints,) Tj
+T*
+(hollow-sounding tiles and likely seepage through floor and wall interfaces..) Tj
 ET
 endstream
 endobj
@@ -49,49 +55,81 @@ endobj
 << /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Resources << /Font << /F1 3 0 R >> >> /Contents 4 0 R >>
 endobj
 6 0 obj
-<< /Length 1036 >>
+<< /Length 2263 >>
 stream
 BT
 /F1 11 Tf
 50 790 Td
 14 TL
-(SECTION 1: INTRODUCTION) Tj
+(2. AREA-WISE OBSERVATIONS) Tj
 T*
-(UrbanRoof performed a non-destructive diagnosis using infrared thermography, checklist) Tj
+(Hall) Tj
 T*
-(interpretation, and expert building pathology logic to determine likely moisture ingress) Tj
+(Observation: Dampness visible at lower wall and skirting with paint blistering and mild) Tj
 T*
-(paths and recommended remedial therapies.) Tj
+(fungal spotting.) Tj
+T*
+(Probable Root Cause: Flat 203 Bathroom: Open tile joints, hollow-sounding tiles and) Tj
+T*
+(likely seepage through floor and wall interfaces.) Tj
+T*
+(Severity Assessment: MODERATE - Monitor wall base for progression. Thermal evidence also) Tj
+T*
+(shows minor thermal drift near skirting with no strong moisture signature.) Tj
+T*
+(Recommended Actions: Inspect and repair the source-side leakage path. Carry out local) Tj
+T*
+(surface repair after moisture entry is stopped.) Tj
+T*
+(Additional Notes: Image Not Available in this static sample artifact.) Tj
 T*
 () Tj
 T*
-(SECTION 2: GENERAL INFORMATION) Tj
+(Bedroom) Tj
 T*
-(Client / Site: UrbanRoof Demo Client) Tj
+(Observation: Mold growth and moisture staining along wall finish adjacent to bathroom) Tj
 T*
-(Health Score: 85.71%) Tj
+(zone.) Tj
 T*
-(Previous Audit / Repairs: No previous audit or repair history reported) Tj
+(Probable Root Cause: Flat 203 Bathroom: Open tile joints, hollow-sounding tiles and) Tj
+T*
+(likely seepage through floor and wall interfaces.) Tj
+T*
+(Severity Assessment: IMMEDIATE - Immediate intervention required at wet wall and) Tj
+T*
+(mold-affected zone. Thermal evidence also shows strong hotspot over mold-affected) Tj
+T*
+(plaster with visible dampness, indicating active leakage path.) Tj
+T*
+(Recommended Actions: Inspect and repair the source-side leakage path. Carry out local) Tj
+T*
+(surface repair after moisture entry is stopped.) Tj
+T*
+(Additional Notes: Image Not Available in this static sample artifact.) Tj
 T*
 () Tj
 T*
-(SECTION 3.1: SOURCES OF LEAKAGE SUMMARY) Tj
+(Master Bedroom) Tj
 T*
-(Bathroom: open tile joints and hollow tiles in Flat 203 indicate active transfer through) Tj
+(Observation: Cold-wall dampness with surface discoloration and recurring seepage marks.) Tj
 T*
-(wall and floor interfaces.) Tj
+(Probable Root Cause: Flat 203 Bathroom: Open tile joints, hollow-sounding tiles and) Tj
 T*
-(Balcony: grout deterioration and threshold ponding allow lateral migration under tile) Tj
+(likely seepage through floor and wall interfaces.) Tj
 T*
-(bed.) Tj
+(Severity Assessment: MODERATE - Damp substrate behind plaster; investigate bathroom) Tj
 T*
-(Terrace / upper wet area: delayed waterproofing distress likely contributes to ceiling) Tj
+(adjacency. Thermal evidence also shows uneven wall cooling with evaporation trace) Tj
 T*
-(level ingress.) Tj
+(indicates trapped moisture behind plaster.) Tj
 T*
-(External wall: moderate cracks, algae/fungus, and plumbing issues contribute to) Tj
+(Recommended Actions: Inspect and repair the source-side leakage path. Carry out local) Tj
 T*
-(rainwater penetration.) Tj
+(surface repair after moisture entry is stopped.) Tj
+T*
+(Additional Notes: Image Not Available in this static sample artifact.) Tj
+T*
+() Tj
 ET
 endstream
 endobj
@@ -99,85 +137,105 @@ endobj
 << /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Resources << /Font << /F1 3 0 R >> >> /Contents 6 0 R >>
 endobj
 8 0 obj
-<< /Length 1632 >>
+<< /Length 3022 >>
 stream
 BT
 /F1 11 Tf
 50 790 Td
 14 TL
-(SECTION 3.2 - 3.9: NEGATIVE SIDE INPUTS) Tj
+(2. AREA-WISE OBSERVATIONS \(CONTINUED\)) Tj
 T*
-(1. Hall \(MODERATE\)) Tj
+(Kitchen) Tj
 T*
-(Dampness visible at lower wall/skirting with paint blistering and mild fungal spotting.) Tj
+(Observation: Moisture traces near shaft wall and lower plaster softening.) Tj
 T*
-() Tj
+(Probable Root Cause: Flat 203 Bathroom: Open tile joints, hollow-sounding tiles and) Tj
 T*
-(2. Bedroom \(IMMEDIATE\)) Tj
+(likely seepage through floor and wall interfaces.) Tj
 T*
-(Mold growth and moisture staining along wall finish adjacent to bathroom zone.) Tj
+(Severity Assessment: MODERATE - Capillary moisture rise from floor junction. Thermal) Tj
 T*
-() Tj
+(evidence also shows broad cool arc at wall corner suggests capillary rise from) Tj
 T*
-(3. Master Bedroom \(MODERATE\)) Tj
+(floor-wall junction.) Tj
 T*
-(Cold-wall dampness with surface discoloration and recurring seepage marks.) Tj
+(Recommended Actions: Inspect and repair the source-side leakage path. Carry out local) Tj
 T*
-() Tj
+(surface repair after moisture entry is stopped.) Tj
 T*
-(4. Kitchen \(MODERATE\)) Tj
-T*
-(Moisture traces near shaft wall and lower plaster softening.) Tj
+(Additional Notes: Image Not Available in this static sample artifact.) Tj
 T*
 () Tj
 T*
-(5. Master Bedroom Wall \(MODERATE\)) Tj
+(Master Bedroom Wall) Tj
 T*
-(Localized damp patch near corner/ceiling junction suggesting migration from upper wet) Tj
+(Observation: Localized damp patch near corner and ceiling junction suggesting migration) Tj
 T*
-(area.) Tj
+(from upper wet area.) Tj
 T*
-() Tj
+(Probable Root Cause: Flat 203 Bathroom: Open tile joints, hollow-sounding tiles and) Tj
 T*
-(6. Parking Area \(IMMEDIATE\)) Tj
+(likely seepage through floor and wall interfaces.) Tj
 T*
-(Thermal cold patches and dampness at beam-column interface below wet area stack.) Tj
+(Severity Assessment: MODERATE - Damp substrate behind plaster; investigate bathroom) Tj
 T*
-() Tj
+(adjacency. Thermal evidence also shows uneven wall cooling with evaporation trace) Tj
 T*
-(7. Common Bathroom Ceiling \(IMMEDIATE\)) Tj
+(indicates trapped moisture behind plaster.) Tj
 T*
-(Water ingress band and flaking finish at ceiling level, likely from tile joints above.) Tj
+(Recommended Actions: Inspect and repair the source-side leakage path. Carry out local) Tj
 T*
-() Tj
+(surface repair after moisture entry is stopped.) Tj
 T*
-(POSITIVE SIDE INPUTS) Tj
-T*
-(1. Flat 203 Bathroom \(HIGH\)) Tj
-T*
-(Open tile joints, hollow-sounding tiles and likely seepage through floor/wall) Tj
-T*
-(interfaces.) Tj
+(Additional Notes: Image Not Available in this static sample artifact.) Tj
 T*
 () Tj
 T*
-(2. Balcony \(MEDIUM\)) Tj
+(Parking Area) Tj
 T*
-(Grout deterioration and threshold ponding path allowing migration under tile bed.) Tj
+(Observation: Thermal cold patches and dampness at beam-column interface below wet area) Tj
+T*
+(stack.) Tj
+T*
+(Probable Root Cause: Flat 203 Bathroom: Open tile joints, hollow-sounding tiles and) Tj
+T*
+(likely seepage through floor and wall interfaces.) Tj
+T*
+(Severity Assessment: IMMEDIATE - Active seepage at negative side wall finish. Thermal) Tj
+T*
+(evidence also shows distinct blue patch consistent with active moisture accumulation) Tj
+T*
+(behind finish.) Tj
+T*
+(Recommended Actions: Inspect and repair the source-side leakage path. Carry out local) Tj
+T*
+(surface repair after moisture entry is stopped.) Tj
+T*
+(Additional Notes: Image Not Available in this static sample artifact.) Tj
 T*
 () Tj
 T*
-(3. Terrace/Upper Wet Area \(MEDIUM\)) Tj
+(Common Bathroom Ceiling) Tj
 T*
-(Potential slab and waterproofing defects contributing to ceiling level ingress.) Tj
+(Observation: Water ingress band and flaking finish at ceiling level, likely from tile) Tj
 T*
-() Tj
+(joints above.) Tj
 T*
-(4. External Wall \(HIGH\)) Tj
+(Probable Root Cause: Flat 203 Bathroom: Open tile joints, hollow-sounding tiles and) Tj
 T*
-(Moderate facade cracks, algae/fungus staining and plumbing-related wetting on outer) Tj
+(likely seepage through floor and wall interfaces.) Tj
 T*
-(face.) Tj
+(Severity Assessment: IMMEDIATE - Moderate seepage from slab joint or wet room above.) Tj
+T*
+(Thermal evidence also shows patchy cool zone along ceiling line suggests early seepage) Tj
+T*
+(through slab joint.) Tj
+T*
+(Recommended Actions: Inspect and repair the source-side leakage path. Carry out local) Tj
+T*
+(surface repair after moisture entry is stopped.) Tj
+T*
+(Additional Notes: Image Not Available in this static sample artifact.) Tj
 T*
 () Tj
 ET
@@ -187,109 +245,85 @@ endobj
 << /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Resources << /Font << /F1 3 0 R >> >> /Contents 8 0 R >>
 endobj
 10 0 obj
-<< /Length 2939 >>
+<< /Length 2656 >>
 stream
 BT
 /F1 11 Tf
 50 790 Td
 14 TL
-(SECTION 4: ANALYSIS & SUGGESTIONS) Tj
+(3. PROBABLE ROOT CAUSE) Tj
 T*
-(Recommended therapies include polymer-modified grouting at the bathroom wet area,) Tj
+(- Hall: Flat 203 Bathroom: Open tile joints, hollow-sounding tiles and likely seepage) Tj
 T*
-(replacement of hollow tiles, sealing of floor-wall junctions, external crack treatment) Tj
+(through floor and wall interfaces.) Tj
 T*
-(with elastomeric repair mortar, balcony threshold waterproofing, and localized) Tj
+(- Bedroom: Flat 203 Bathroom: Open tile joints, hollow-sounding tiles and likely seepage) Tj
 T*
-(RCC/plaster repair at ceiling and parking-level affected zones.) Tj
+(through floor and wall interfaces.) Tj
 T*
-() Tj
+(- Master Bedroom: Flat 203 Bathroom: Open tile joints, hollow-sounding tiles and likely) Tj
 T*
-(DELAYED ACTION RISKS) Tj
+(seepage through floor and wall interfaces.) Tj
 T*
-(Bedroom / Hall wall <- Flat 203 bathroom: Open tile joints and hollow tiles transferring) Tj
+(- Kitchen: Flat 203 Bathroom: Open tile joints, hollow-sounding tiles and likely seepage) Tj
 T*
-(moisture through masonry.) Tj
+(through floor and wall interfaces.) Tj
 T*
-(Common bathroom ceiling <- Upper wet area / slab interface: Ingress at ceiling level due) Tj
+(- Master Bedroom Wall: Flat 203 Bathroom: Open tile joints, hollow-sounding tiles and) Tj
 T*
-(to failed tile or slab waterproofing detail.) Tj
+(likely seepage through floor and wall interfaces.) Tj
 T*
-(Parking area beam-column zone <- Vertical wet stack: Repeated saturation moving down) Tj
+(- Parking Area: Flat 203 Bathroom: Open tile joints, hollow-sounding tiles and likely) Tj
 T*
-(service alignment.) Tj
+(seepage through floor and wall interfaces.) Tj
 T*
-(External wall affected rooms <- Facade cracks and plumbing line: Rainwater penetration) Tj
+(- Common Bathroom Ceiling: Flat 203 Bathroom: Open tile joints, hollow-sounding tiles) Tj
 T*
-(and outer wall wetting contributing to dampness.) Tj
-T*
-() Tj
-T*
-(THERMAL REFERENCES \(SELECTED\)) Tj
-T*
-(RB02377X | Hall skirting wall | Hot 25.1C | Cold 22.7C | MONITOR) Tj
-T*
-(Monitor wall base for progression. Minor thermal drift near skirting with no strong) Tj
-T*
-(moisture signature.) Tj
+(and likely seepage through floor and wall interfaces.) Tj
 T*
 () Tj
 T*
-(RB02378X | Hall wall corner | Hot 25.6C | Cold 22.4C | MODERATE) Tj
+(4. SEVERITY ASSESSMENT) Tj
 T*
-(Moderate dampness tied to adjacent wet-area loading. Cold edge variation suggests) Tj
+(- Hall: MODERATE because Monitor wall base for progression. Thermal evidence also shows) Tj
 T*
-(residual dampness migrating from adjacent wall corner.) Tj
+(minor thermal drift near skirting with no strong moisture signature.) Tj
 T*
-() Tj
+(- Bedroom: IMMEDIATE because Immediate intervention required at wet wall and) Tj
 T*
-(RB02379X | Bedroom damp wall | Hot 28.8C | Cold 21.8C | IMMEDIATE) Tj
+(mold-affected zone. Thermal evidence also shows strong hotspot over mold-affected) Tj
 T*
-(Immediate intervention required at wet wall and mold-affected zone. Strong hotspot over) Tj
+(plaster with visible dampness, indicating active leakage path.) Tj
 T*
-(mold-affected plaster with visible dampness, indicating active leakage path.) Tj
+(- Master Bedroom: MODERATE because Damp substrate behind plaster; investigate bathroom) Tj
 T*
-() Tj
+(adjacency. Thermal evidence also shows uneven wall cooling with evaporation trace) Tj
 T*
-(RB02380X | Common bathroom ceiling | Hot 26.4C | Cold 22.2C | MODERATE) Tj
+(indicates trapped moisture behind plaster.) Tj
 T*
-(Moderate seepage from slab joint or wet room above. Patchy cool zone along ceiling line) Tj
+(- Kitchen: MODERATE because Capillary moisture rise from floor junction. Thermal) Tj
 T*
-(suggests early seepage through slab joint.) Tj
+(evidence also shows broad cool arc at wall corner suggests capillary rise from) Tj
 T*
-() Tj
+(floor-wall junction.) Tj
 T*
-(RB02381X | Master bedroom wall | Hot 26.8C | Cold 22.6C | MODERATE) Tj
+(- Master Bedroom Wall: MODERATE because Damp substrate behind plaster; investigate) Tj
 T*
-(Damp substrate behind plaster; investigate bathroom adjacency. Uneven wall cooling with) Tj
+(bathroom adjacency. Thermal evidence also shows uneven wall cooling with evaporation) Tj
 T*
-(evaporation trace indicates trapped moisture behind plaster.) Tj
+(trace indicates trapped moisture behind plaster.) Tj
 T*
-() Tj
+(- Parking Area: IMMEDIATE because Active seepage at negative side wall finish. Thermal) Tj
 T*
-(RB02382X | Bathroom plumbing chase | Hot 27.1C | Cold 22.5C | MODERATE) Tj
+(evidence also shows distinct blue patch consistent with active moisture accumulation) Tj
 T*
-(Possible concealed plumbing issue; correlate with inspection inputs. Mild thermal bridge) Tj
+(behind finish.) Tj
 T*
-(near plumbing chase; monitor for concealed line loss.) Tj
+(- Common Bathroom Ceiling: IMMEDIATE because Moderate seepage from slab joint or wet) Tj
 T*
-() Tj
+(room above. Thermal evidence also shows patchy cool zone along ceiling line suggests) Tj
 T*
-(RB02383X | Balcony inside face | Hot 27.5C | Cold 22.1C | MODERATE) Tj
-T*
-(Balcony grout failure allowing lateral moisture movement. Warm-to-cool gradient around) Tj
-T*
-(balcony wall suggests water tracking across grout lines.) Tj
-T*
-() Tj
-T*
-(RB02384X | Window jamb | Hot 26.9C | Cold 22.3C | MONITOR) Tj
-T*
-(Low severity anomaly with no confirmed active source. Stable wall surface with isolated) Tj
-T*
-(cooler point near window jamb.) Tj
-T*
-() Tj
+(early seepage through slab joint.) Tj
 ET
 endstream
 endobj
@@ -297,31 +331,63 @@ endobj
 << /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Resources << /Font << /F1 3 0 R >> >> /Contents 10 0 R >>
 endobj
 12 0 obj
-<< /Length 675 >>
+<< /Length 1469 >>
 stream
 BT
 /F1 11 Tf
 50 790 Td
 14 TL
-(SECTION 5: LIMITATION AND PRECAUTION NOTE) Tj
+(5. RECOMMENDED ACTIONS) Tj
 T*
-(Findings are based on conditions visible and measurable on the date of inspection.) Tj
+(- Hall: Inspect and repair the source-side leakage path. Carry out local surface repair) Tj
 T*
-(Thermal imagery indicates moisture signatures and anomalies but does not replace) Tj
+(after moisture entry is stopped.) Tj
 T*
-(invasive confirmation where required. Hidden services and inaccessible cavities may) Tj
+(- Bedroom: Inspect and repair the source-side leakage path. Carry out local surface) Tj
 T*
-(influence actual remedial scope.) Tj
+(repair after moisture entry is stopped.) Tj
+T*
+(- Master Bedroom: Inspect and repair the source-side leakage path. Carry out local) Tj
+T*
+(surface repair after moisture entry is stopped.) Tj
+T*
+(- Kitchen: Inspect and repair the source-side leakage path. Carry out local surface) Tj
+T*
+(repair after moisture entry is stopped.) Tj
+T*
+(- Master Bedroom Wall: Inspect and repair the source-side leakage path. Carry out local) Tj
+T*
+(surface repair after moisture entry is stopped.) Tj
+T*
+(- Parking Area: Inspect and repair the source-side leakage path. Carry out local surface) Tj
+T*
+(repair after moisture entry is stopped.) Tj
+T*
+(- Common Bathroom Ceiling: Inspect and repair the source-side leakage path. Carry out) Tj
+T*
+(local surface repair after moisture entry is stopped.) Tj
 T*
 () Tj
 T*
-(LEGAL DISCLAIMER) Tj
+(6. ADDITIONAL NOTES) Tj
 T*
-(This sample-generated report was created from the bundled UrbanRoof case data for) Tj
+(- Property health score from the inspection form: 85.71%.) Tj
 T*
-(demonstration of the AI-powered DDR workflow. Final site execution decisions should) Tj
+(- Thermal references reviewed: 30.) Tj
 T*
-(always be validated by a qualified inspection professional.) Tj
+(- This static sample script does not embed report images.) Tj
+T*
+() Tj
+T*
+(7. MISSING OR UNCLEAR INFORMATION) Tj
+T*
+(- Not Available: exact repair history before inspection.) Tj
+T*
+() Tj
+T*
+(8. CONFLICTING DETAILS) Tj
+T*
+(- Not Available.) Tj
 ET
 endstream
 endobj
@@ -335,17 +401,17 @@ xref
 0000000058 00000 n 
 0000000141 00000 n 
 0000000211 00000 n 
-0000001005 00000 n 
-0000001131 00000 n 
-0000002219 00000 n 
-0000002345 00000 n 
-0000004029 00000 n 
-0000004155 00000 n 
-0000007147 00000 n 
-0000007275 00000 n 
-0000008002 00000 n 
+0000001381 00000 n 
+0000001507 00000 n 
+0000003822 00000 n 
+0000003948 00000 n 
+0000007022 00000 n 
+0000007148 00000 n 
+0000009857 00000 n 
+0000009985 00000 n 
+0000011507 00000 n 
 trailer
 << /Size 14 /Root 1 0 R >>
 startxref
-8130
+11635
 %%EOF
