@@ -283,7 +283,7 @@ export default function App() {
   }
 
   async function handleDownloadPdf() {
-    if (!report) {
+    if (!report || isPreparingEvidence) {
       return;
     }
 
@@ -411,8 +411,15 @@ export default function App() {
                     </span>
                     <PDFGenerator
                       onDownload={handleDownloadPdf}
-                      disabled={isDownloading}
-                      loading={isDownloading}
+                      disabled={isDownloading || isPreparingEvidence}
+                      loading={isDownloading || isPreparingEvidence}
+                      label={
+                        isPreparingEvidence
+                          ? "Preparing evidence..."
+                          : isDownloading
+                            ? "Preparing PDF..."
+                            : "Download PDF"
+                      }
                     />
                   </div>
                 ) : null}

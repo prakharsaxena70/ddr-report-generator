@@ -44,6 +44,8 @@ Rules:
 - Avoid duplicate points.
 - If information is missing, write "Not Available".
 - If information conflicts, mention the conflict clearly.
+- Do not resolve conflicts by assumption, typo correction, or guessing.
+- Do not say that one value was "assumed" to be another value.
 - Keep the language simple and client-friendly.
 - For every area-wise observation, include evidence references to source pages and thermal image IDs when available.
 Return JSON only in this structure:

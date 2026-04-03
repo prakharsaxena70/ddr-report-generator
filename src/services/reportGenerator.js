@@ -12,6 +12,7 @@ import {
 const NOT_AVAILABLE = "Not Available";
 const NO_CONFLICTS = "No direct conflict found in the uploaded documents.";
 const NO_MISSING_INFO = "Not Available";
+const ASSUMPTION_PATTERN = /\b(assum(?:e|ed|ing)|typo\s+for|likely\s+typo|we have assumed|we assumed)\b/i;
 
 function ensureText(value, fallback = NOT_AVAILABLE) {
   if (typeof value === "string" && value.trim()) {
@@ -72,6 +73,44 @@ function dedupeBy(items = [], getKey) {
     seen.add(key);
     return true;
   });
+}
+
+function splitSentences(text) {
+  return ensureText(text, "")
+    .split(/(?<=[.!?])\s+/)
+    .map((sentence) => sentence.trim())
+    .filter(Boolean);
+}
+
+function buildConflictMessageFromAssumption(sentence) {
+  const flatMatches = sentence.match(/flat\s*(?:no\.?)?\s*(\d+)/gi) || [];
+  const normalizedFlats = dedupeStrings(flatMatches.map((item) => item.replace(/\s+/g, " ").trim()));
+
+  if (normalizedFlats.length >= 2) {
+    return `The documents reference conflicting flat numbers (${normalizedFlats.join(" and ")}). This conflict was not auto-resolved.`;
+  }
+
+  return `The documents contain an unresolved conflict: ${sentence.replace(/\.$/, "")}.`;
+}
+
+function sanitizeAssumptionText(text, fallback = NOT_AVAILABLE) {
+  const sentences = splitSentences(text);
+  const kept = [];
+  const conflicts = [];
+
+  sentences.forEach((sentence) => {
+    if (ASSUMPTION_PATTERN.test(sentence)) {
+      conflicts.push(buildConflictMessageFromAssumption(sentence));
+      return;
+    }
+    kept.push(sentence);
+  });
+
+  const cleanedText = kept.join(" ").trim() || fallback;
+  return {
+    text: cleanedText,
+    conflicts: dedupeStrings(conflicts),
+  };
 }
 
 function keywordSet(text) {
@@ -494,28 +533,49 @@ function buildFallbackReport({ propertyDetails, thermalData, inspectionData }) {
 
 function normalizeObservation(item, fallback) {
   const evidenceRefs = item?.evidenceRefs || {};
+  const observationText = sanitizeAssumptionText(item?.observation, fallback.observation);
+  const rootCauseText = sanitizeAssumptionText(
+    item?.probableRootCause,
+    fallback.probableRootCause,
+  );
+  const severityReasoning = sanitizeAssumptionText(
+    item?.severityAssessment?.reasoning,
+    fallback.severityAssessment.reasoning,
+  );
+  const actionList = ensureStringList(item?.recommendedActions, fallback.recommendedActions).map(
+    (action) => sanitizeAssumptionText(action, fallback.recommendedActions[0] || NOT_AVAILABLE),
+  );
+  const noteList = ensureStringList(item?.additionalNotes, fallback.additionalNotes).map((note) =>
+    sanitizeAssumptionText(note, fallback.additionalNotes[0] || NOT_AVAILABLE),
+  );
+  const missingList = ensureStringList(
+    item?.missingOrUnclearInformation,
+    fallback.missingOrUnclearInformation,
+  );
+  const explicitConflicts = ensureStringList(item?.conflicts, fallback.conflicts);
+  const derivedConflicts = dedupeStrings([
+    ...observationText.conflicts,
+    ...rootCauseText.conflicts,
+    ...severityReasoning.conflicts,
+    ...actionList.flatMap((entry) => entry.conflicts),
+    ...noteList.flatMap((entry) => entry.conflicts),
+  ]);
 
   return {
     area: ensureText(item?.area, fallback.area),
-    observation: ensureText(item?.observation, fallback.observation),
-    probableRootCause: ensureText(item?.probableRootCause, fallback.probableRootCause),
+    observation: observationText.text,
+    probableRootCause: rootCauseText.text,
     severityAssessment: {
       level: ensureText(item?.severityAssessment?.level, fallback.severityAssessment.level),
-      reasoning: ensureText(
-        item?.severityAssessment?.reasoning,
-        fallback.severityAssessment.reasoning,
-      ),
+      reasoning: severityReasoning.text,
     },
-    recommendedActions: ensureStringList(
-      item?.recommendedActions,
-      fallback.recommendedActions,
-    ),
-    additionalNotes: ensureStringList(item?.additionalNotes, fallback.additionalNotes),
-    missingOrUnclearInformation: ensureStringList(
-      item?.missingOrUnclearInformation,
-      fallback.missingOrUnclearInformation,
-    ),
-    conflicts: ensureStringList(item?.conflicts, fallback.conflicts),
+    recommendedActions: dedupeStrings(actionList.map((entry) => entry.text)),
+    additionalNotes: dedupeStrings(noteList.map((entry) => entry.text)),
+    missingOrUnclearInformation: missingList,
+    conflicts:
+      dedupeStrings([...explicitConflicts, ...derivedConflicts]).length
+        ? dedupeStrings([...explicitConflicts, ...derivedConflicts])
+        : [NO_CONFLICTS],
     evidenceRefs: {
       thermalImageIds: ensureStringList(
         evidenceRefs.thermalImageIds,
@@ -555,6 +615,18 @@ function mergeGeneratedReport(result, fallbackReport) {
     const generated = resultByArea.get(fallback.area.toLowerCase()) || {};
     return normalizeObservation(generated, fallback);
   });
+  const topLevelNotes = ensureStringList(result.additionalNotes, fallbackReport.additionalNotes).map((item) =>
+    sanitizeAssumptionText(item, NOT_AVAILABLE),
+  );
+  const topLevelMissing = ensureStringList(
+    result.missingOrUnclearInformation,
+    fallbackReport.missingOrUnclearInformation,
+  );
+  const topLevelConflicts = dedupeStrings([
+    ...ensureStringList(result.conflicts, fallbackReport.conflicts),
+    ...topLevelNotes.flatMap((item) => item.conflicts),
+    ...mergedAreaObservations.flatMap((item) => item.conflicts),
+  ]);
 
   return {
     ...fallbackReport,
@@ -610,16 +682,9 @@ function mergeGeneratedReport(result, fallbackReport) {
     })),
       (item) => `${item.area}::${item.action}`,
     ),
-    additionalNotes: dedupeStrings(
-      ensureStringList(result.additionalNotes, fallbackReport.additionalNotes),
-    ),
-    missingOrUnclearInformation: ensureStringList(
-      result.missingOrUnclearInformation,
-      fallbackReport.missingOrUnclearInformation,
-    ),
-    conflicts: dedupeStrings(
-      ensureStringList(result.conflicts, fallbackReport.conflicts),
-    ),
+    additionalNotes: dedupeStrings(topLevelNotes.map((item) => item.text)),
+    missingOrUnclearInformation: topLevelMissing,
+    conflicts: topLevelConflicts.length ? topLevelConflicts : [NO_CONFLICTS],
   };
 }
 
