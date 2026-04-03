@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import ChatInterface from "@/components/ChatInterface";
 import { getSession, sendMessageStream, uploadFile } from "@/lib/api";
-import { ChatMessage, DataPreview } from "@/lib/types";
+import { ChatMessage } from "@/lib/types";
 import { Loader2 } from "lucide-react";
 
 export default function ChatPage() {
@@ -31,7 +31,11 @@ export default function ChatPage() {
           setMessages(session.messages || []);
           setCurrentFile({
             filename: session.filename,
-            preview: session.file_meta as DataPreview,
+            preview: {
+              shape: session.file_meta.shape,
+              columns: session.file_meta.columns,
+              preview: session.file_meta.preview || [],
+            },
           });
         }
       } catch (err) {

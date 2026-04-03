@@ -41,6 +41,7 @@ export interface SessionData {
     extension: string;
     shape: { rows: number; columns: number };
     columns: ColumnInfo[];
+    preview?: Record<string, string>[];
   };
   messages: ChatMessage[];
   created_at?: string | null;
