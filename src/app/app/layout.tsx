@@ -50,14 +50,14 @@ export default function AppLayout({
 
   const handleUpdateSession = (id: string, updates: { nickname?: string; is_starred?: boolean }) => {
     setSessions(prev => 
-      prev.map(s => s.id === id ? { ...s, ...updates } : s)
+      prev.map(s => (s.id === id || s.session_id === id) ? { ...s, ...updates } : s)
     );
   };
 
   const handleDeleteSession = async (id: string) => {
     try {
       await apiDeleteSession(id);
-      setSessions(prev => prev.filter(s => s.id !== id));
+      setSessions(prev => prev.filter(s => s.id !== id && s.session_id !== id));
       
       // If we're on the deleted session's page, redirect to main app
       if (activeSessionId === id) {

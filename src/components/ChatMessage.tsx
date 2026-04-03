@@ -409,7 +409,7 @@ function parseMessageContent(content: string) {
 }
 
 // Markdown components with black text
-const MarkdownComponents = {
+const MarkdownComponents: any = {
   strong: ({ children }: { children: React.ReactNode }) => (
     <strong className="font-bold text-black">{children}</strong>
   ),

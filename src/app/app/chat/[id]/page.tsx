@@ -34,11 +34,11 @@ export default function ChatPage() {
           setCurrentFile({
             filename: session.filename,
             preview: {
-              shape: session.file_meta.shape,
-              columns: session.file_meta.columns,
-              preview: session.file_meta.preview || [],
+              shape: session.file_meta?.shape || { rows: 0, columns: 0 },
+              columns: session.file_meta?.columns || [],
+              preview: session.file_meta?.preview || [],
             },
-            pdfData: session.file_meta.pdf_data,
+            pdfData: session.file_meta?.pdf_data,
           });
         }
       } catch (err) {

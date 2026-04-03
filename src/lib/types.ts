@@ -56,18 +56,21 @@ export interface ChatResponse {
 }
 
 export interface SessionData {
-  session_id: string;
+  id: string;
+  session_id?: string;
   filename: string;
-  file_meta: {
-    filename: string;
-    size: number;
-    extension: string;
-    shape: { rows: number; columns: number };
-    columns: ColumnInfo[];
+  nickname?: string | null;
+  is_starred?: boolean;
+  file_meta?: {
+    filename?: string;
+    size?: number;
+    extension?: string;
+    shape?: { rows: number; columns: number };
+    columns?: ColumnInfo[];
     preview?: Record<string, string>[];
     pdf_data?: PDFData;
   };
-  messages: ChatMessage[];
+  messages?: ChatMessage[];
   created_at?: string | null;
 }
 
