@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { GoogleGenerativeAI } from "@google/generative-ai";
 
+export const runtime = 'nodejs';
+export const dynamic = 'force-dynamic';
+
 // Initialize Gemini
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || "");
 
@@ -27,6 +30,17 @@ export async function POST(request: NextRequest) {
       thermalText = await extractTextFromPDF(thermalBuffer);
     }
 
+    // Check if Gemini API key is configured
+    if (!process.env.GEMINI_API_KEY) {
+      return NextResponse.json(
+        { 
+          error: "Gemini API key not configured",
+          message: "Please add GEMINI_API_KEY environment variable in Vercel"
+        },
+        { status: 500 }
+      );
+    }
+
     // Generate DDR using Gemini
     const ddrReport = await generateDDR(inspectionText, thermalText);
 
@@ -48,14 +62,8 @@ export async function POST(request: NextRequest) {
 }
 
 async function extractTextFromPDF(buffer: Buffer): Promise<string> {
-  // For now, we'll use a simple text extraction
-  // In production, you'd use a PDF parsing library like pdf-parse
-  // Since this is server-side, we can use Node.js libraries
   try {
-    // Try to extract text using basic PDF text extraction
-    // PDFs have text stored in specific formats
     const text = buffer.toString("utf-8");
-    // Clean up the text (remove binary data)
     const cleanText = text.replace(/[^\x20-\x7E\n\r\t]/g, " ");
     return cleanText.length > 100 ? cleanText : "PDF text extraction requires additional libraries";
   } catch (error) {
